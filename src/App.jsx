@@ -1293,7 +1293,7 @@ export default function App() {
       {/* MODAL: Add New Note */}
       {isNoteModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#4A3E3C]/30 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E8DAC8] rounded-3xl shadow-xl w-full max-w-md p-6 space-y-5">
+          <div className="bg-white border border-[#E8DAC8] rounded-3xl shadow-xl w-full max-w-2xl p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-[#F3E5D8] pb-3">
               <h3 className="font-extrabold text-[#4A3E3C] text-base">New Note ✏️</h3>
               <button onClick={() => setIsNoteModalOpen(false)} className="text-[#8A7977] hover:text-[#4A3E3C]">
@@ -1317,9 +1317,9 @@ export default function App() {
               <div>
                 <label className="block text-xs font-bold text-[#8A7977] mb-1.5">Content</label>
                 <textarea
-                  rows={5}
+                  rows={10}
                   placeholder="Tulis isi catatan di sini..."
-                  className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl p-3.5 text-sm font-medium text-[#4A3E3C] focus:outline-none focus:border-[#C89B68] focus:ring-1 focus:ring-[#C89B68]/30 transition-all resize-none"
+                  className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl p-3.5 text-sm font-medium text-[#4A3E3C] focus:outline-none focus:border-[#C89B68] focus:ring-1 focus:ring-[#C89B68]/30 transition-all resize-y min-h-[220px] max-h-[50vh]"
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                 />
