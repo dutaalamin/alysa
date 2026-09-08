@@ -147,8 +147,25 @@ const INITIAL_NOTES = [];
 const INITIAL_FOLDERS = [];
 
 export default function App() {
-  const [notes, setNotes] = useState([]);
-  const [folders, setFolders] = useState([]);
+  const [notes, setNotes] = useState(() => {
+    try {
+      const cached = localStorage.getItem('alysa_notes_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [folders, setFolders] = useState(() => {
+    try {
+      const cached = localStorage.getItem('alysa_folders_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [isSyncing, setIsSyncing] = useState(true);
 
   useEffect(() => {
     // Clear old demo storage items to ensure clean empty state
@@ -189,22 +206,56 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsSyncing(true);
         const { data: notesData, error: notesError } = await supabase.from('notes').select('*').order('created_at', { ascending: false });
         if (!notesError && notesData) {
           setNotes(notesData);
+          try {
+            localStorage.setItem('alysa_notes_cache', JSON.stringify(notesData));
+          } catch (e) {
+            console.log('Cache save err:', e);
+          }
         }
         
         const { data: foldersData, error: foldersError } = await supabase.from('folders').select('*').order('created_at', { ascending: false });
         if (!foldersError && foldersData) {
           setFolders(foldersData);
+          try {
+            localStorage.setItem('alysa_folders_cache', JSON.stringify(foldersData));
+          } catch (e) {
+            console.log('Cache save err:', e);
+          }
         }
       } catch (err) {
         console.log('Supabase sync info:', err);
+      } finally {
+        setIsSyncing(false);
       }
     };
 
     fetchData();
   }, []);
+
+  // Continuous local cache updates
+  useEffect(() => {
+    try {
+      if (notes.length > 0) {
+        localStorage.setItem('alysa_notes_cache', JSON.stringify(notes));
+      }
+    } catch (e) {
+      console.log('Cache sync notes err:', e);
+    }
+  }, [notes]);
+
+  useEffect(() => {
+    try {
+      if (folders.length > 0) {
+        localStorage.setItem('alysa_folders_cache', JSON.stringify(folders));
+      }
+    } catch (e) {
+      console.log('Cache sync folders err:', e);
+    }
+  }, [folders]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -638,6 +689,12 @@ export default function App() {
               >
                 <ListIcon size={16} />
               </button>
+            </div>
+
+            {/* Cloud Sync Status Indicator */}
+            <div className="flex items-center gap-1.5 bg-[#FAF0E6] border border-[#E8DAC8] px-3 py-1.5 rounded-full text-[11px] font-bold text-[#8C5E32] shadow-sm">
+              <Cloud size={13} className={isSyncing ? "animate-pulse text-[#C89B68]" : "text-[#8C5E32]"} />
+              <span>{isSyncing ? 'Syncing...' : 'Cloud Synced'}</span>
             </div>
 
             {/* User Profile Badge (Alysa - Desktop only) */}
