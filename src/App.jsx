@@ -201,6 +201,8 @@ export default function App() {
   // New Folder Form
   const [newFolderName, setNewFolderName] = useState('');
   const [activeNoteModal, setActiveNoteModal] = useState(null);
+  const [isEditingText, setIsEditingText] = useState(false);
+  const [editTextContent, setEditTextContent] = useState('');
 
   const fileInputRef = useRef(null);
 
@@ -279,6 +281,34 @@ export default function App() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleSaveEditedText = async () => {
+    if (!activeNoteModal) return;
+    const noteId = activeNoteModal.id;
+
+    const downloadMatch = activeNoteModal.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
+    const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
+    const fileHeaderMatch = activeNoteModal.content?.match(/^\[(PDF File|Photo \/ Image Note|Document File|PowerPoint Presentation|Excel Spreadsheet|DOCX File|TXT File)\] .+/i);
+    const fileHeader = fileHeaderMatch ? fileHeaderMatch[0] : null;
+
+    let newFullContent = editTextContent.trim();
+    if (downloadUrl) {
+      const prefix = fileHeader ? `${fileHeader}\n\n📥 DOWNLOAD_URL: ${downloadUrl}` : `📥 DOWNLOAD_URL: ${downloadUrl}`;
+      newFullContent = `${prefix}\n\n${newFullContent}`;
+    } else if (fileHeader) {
+      newFullContent = `${fileHeader}\n\n${newFullContent}`;
+    }
+
+    try {
+      await supabase.from('notes').update({ content: newFullContent }).eq('id', noteId);
+    } catch (err) {
+      console.log('Supabase note text edit notice:', err);
+    }
+
+    setNotes(prev => prev.map(n => n.id === noteId ? { ...n, content: newFullContent } : n));
+    setActiveNoteModal(prev => ({ ...prev, content: newFullContent }));
+    setIsEditingText(false);
   };
 
   const [isCloudConnected, setIsCloudConnected] = useState(true);
@@ -1192,7 +1222,7 @@ export default function App() {
                 <Upload size={20} />
               </div>
               <p className="text-xs font-extrabold text-[#4A3E3C]">
-                Drop whiteboard photos / course files here to upload
+                Drop files or documents here to upload
               </p>
               <p className="text-[10px] text-[#8A7977]">
                 Upload note photos or course documents
@@ -1317,7 +1347,10 @@ export default function App() {
                           initial={{ opacity: 0, scale: 0.96 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.96 }}
-                          onClick={() => setActiveNoteModal(note)}
+                          onClick={() => {
+                            setActiveNoteModal(note);
+                            setIsEditingText(false);
+                          }}
                           className="bg-white border border-[#E8DAC8] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col justify-between group cursor-pointer"
                         >
                           <div>
@@ -1812,11 +1845,70 @@ export default function App() {
               })()}
 
               {/* Note Text Content */}
-              {activeNoteModal.content && formatCleanNoteContent(activeNoteModal.content) && (
-                <div className="bg-[#FAF4EC] border border-[#E8DAC8] rounded-2xl p-5 text-sm text-[#4A3E3C] leading-relaxed font-medium whitespace-pre-wrap select-text">
-                  {formatCleanNoteContent(activeNoteModal.content)}
+              <div className="bg-[#FAF4EC] border border-[#E8DAC8] rounded-2xl p-4 sm:p-5 text-sm text-[#4A3E3C] leading-relaxed font-medium transition-all">
+                <div className="flex items-center justify-between mb-3 border-b border-[#E8DAC8]/70 pb-2">
+                  <div className="flex items-center gap-2">
+                    <FileText size={15} className="text-[#8C5E32]" />
+                    <span className="text-xs font-extrabold text-[#4A3E3C] uppercase tracking-wider">
+                      Isi Catatan / Extracted Text
+                    </span>
+                  </div>
+                  
+                  {!isEditingText ? (
+                    <button
+                      onClick={() => {
+                        setEditTextContent(formatCleanNoteContent(activeNoteModal.content));
+                        setIsEditingText(true);
+                      }}
+                      className="text-xs font-bold text-[#8C5E32] hover:text-[#5C3E20] bg-white border border-[#E8DAC8] hover:border-[#C89B68] hover:bg-[#FAF0E6] px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                    >
+                      <SquarePen size={13} />
+                      <span>Edit Teks</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setIsEditingText(false)}
+                        className="text-xs font-bold text-[#8A7977] hover:bg-[#E8DAC8] px-2.5 py-1.5 rounded-xl transition-all"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        onClick={handleSaveEditedText}
+                        className="text-xs font-bold text-white bg-[#C89B68] hover:bg-[#B88B58] px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>Simpan Perubahan</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {isEditingText ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editTextContent}
+                      onChange={(e) => setEditTextContent(e.target.value)}
+                      rows={8}
+                      placeholder="Ketik atau edit teks catatan di sini..."
+                      className="w-full bg-white border-2 border-[#C89B68] rounded-xl p-3 text-sm text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 leading-relaxed font-medium transition-all shadow-inner"
+                    />
+                    <p className="text-[11px] text-[#8A7977] text-right">
+                      {editTextContent.length} karakter • {editTextContent.trim() ? editTextContent.trim().split(/\s+/).length : 0} kata
+                    </p>
+                  </div>
+                ) : (
+                  formatCleanNoteContent(activeNoteModal.content) ? (
+                    <div className="whitespace-pre-wrap select-text">
+                      {formatCleanNoteContent(activeNoteModal.content)}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-[#8A7977] text-xs italic">
+                      Belum ada teks catatan. Klik tombol <span className="font-bold text-[#8C5E32] not-italic">"Edit Teks"</span> di atas untuk mulai menulis catatan.
+                    </div>
+                  )
+                )}
+              </div>
             </div>
 
             {/* Modal Actions Footer */}
