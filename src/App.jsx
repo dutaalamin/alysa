@@ -202,38 +202,89 @@ export default function App() {
 
   const [isCloudConnected, setIsCloudConnected] = useState(true);
 
-  // Fetch initial notes and folders from Supabase
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsSyncing(true);
-        const { data: notesData, error: notesError } = await supabase.from('notes').select('*').order('created_at', { ascending: false });
-        if (!notesError && notesData) {
-          setNotes(notesData);
-          try {
-            localStorage.setItem('alysa_notes_cache', JSON.stringify(notesData));
-          } catch (e) {
-            console.log('Cache save err:', e);
-          }
+  const fetchData = async () => {
+    try {
+      setIsSyncing(true);
+      const { data: notesData, error: notesError } = await supabase.from('notes').select('*').order('created_at', { ascending: false });
+      if (!notesError && notesData) {
+        setNotes(notesData);
+        try {
+          localStorage.setItem('alysa_notes_cache', JSON.stringify(notesData));
+        } catch (e) {
+          console.log('Cache save err:', e);
         }
-        
-        const { data: foldersData, error: foldersError } = await supabase.from('folders').select('*').order('created_at', { ascending: false });
-        if (!foldersError && foldersData) {
-          setFolders(foldersData);
-          try {
-            localStorage.setItem('alysa_folders_cache', JSON.stringify(foldersData));
-          } catch (e) {
-            console.log('Cache save err:', e);
-          }
-        }
-      } catch (err) {
-        console.log('Supabase sync info:', err);
-      } finally {
-        setIsSyncing(false);
       }
-    };
+      
+      const { data: foldersData, error: foldersError } = await supabase.from('folders').select('*').order('created_at', { ascending: false });
+      if (!foldersError && foldersData) {
+        setFolders(foldersData);
+        try {
+          localStorage.setItem('alysa_folders_cache', JSON.stringify(foldersData));
+        } catch (e) {
+          console.log('Cache save err:', e);
+        }
+      }
+    } catch (err) {
+      console.log('Supabase sync info:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
+  // Fetch initial notes & setup Supabase Realtime Subscriptions
+  useEffect(() => {
     fetchData();
+
+    // Real-time listener for 'notes' table
+    const notesChannel = supabase
+      .channel('realtime_notes_live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notes' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setNotes((prev) => {
+              if (prev.some(n => n.id === payload.new.id)) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setNotes((prev) => prev.filter(n => n.id !== payload.old.id));
+          } else if (payload.eventType === 'UPDATE') {
+            setNotes((prev) => prev.map(n => n.id === payload.new.id ? payload.new : n));
+          }
+        }
+      )
+      .subscribe();
+
+    // Real-time listener for 'folders' table
+    const foldersChannel = supabase
+      .channel('realtime_folders_live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'folders' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setFolders((prev) => {
+              if (prev.some(f => f.id === payload.new.id)) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setFolders((prev) => prev.filter(f => f.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    // Polling backup every 8 seconds for guaranteed live sync
+    const pollInterval = setInterval(() => {
+      fetchData();
+    }, 8000);
+
+    return () => {
+      supabase.removeChannel(notesChannel);
+      supabase.removeChannel(foldersChannel);
+      clearInterval(pollInterval);
+    };
   }, []);
 
   // Continuous local cache updates
