@@ -636,8 +636,8 @@ export default function App() {
               </button>
             </div>
 
-            {/* User Profile Badge (Alysa) */}
-            <div className="flex items-center gap-2 bg-white border border-[#E8DAC8] px-3.5 py-1.5 rounded-full shadow-sm">
+            {/* User Profile Badge (Alysa - Desktop only) */}
+            <div className="hidden md:flex items-center gap-2 bg-white border border-[#E8DAC8] px-3.5 py-1.5 rounded-full shadow-sm">
               <div className="w-7 h-7 rounded-full bg-[#F3E5D8] text-[#8C5E32] flex items-center justify-center text-xs font-bold">
                 🌸
               </div>
