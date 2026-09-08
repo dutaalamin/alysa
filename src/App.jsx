@@ -176,7 +176,7 @@ export default function App() {
     localStorage.removeItem('studiyou_folders');
   }, []);
 
-  const [activeNav, setActiveNav] = useState('All Notes');
+  const [activeNav, setActiveNav] = useState('All Files');
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [selectedDay, setSelectedDay] = useState('Monday');
   const [viewMode, setViewMode] = useState('grid');
@@ -383,7 +383,7 @@ export default function App() {
   // Filter notes
   const filteredNotes = notes.filter(n => {
     const matchesNav = 
-      activeNav === 'All Notes' ? true :
+      activeNav === 'All Files' ? true :
       activeNav === 'Photos / Slides' ? (n.images && n.images.length > 0) :
       activeNav === 'AI Scan' ? n.ocrExtracted : true;
 
@@ -606,7 +606,7 @@ export default function App() {
 
                 <nav className="space-y-1 pt-2">
                   {[
-                    { label: 'All Notes', icon: FileText, type: 'nav' },
+                    { label: 'All Files', icon: FileText, type: 'nav' },
                     { label: 'New Note', icon: SquarePen, type: 'action' },
                     { label: 'Class Schedule', icon: Calendar, type: 'nav' }
                   ].map((item) => {
@@ -701,7 +701,7 @@ export default function App() {
           {/* Side Navigation Items */}
           <nav className="space-y-1 pt-2">
             {[
-              { label: 'All Notes', icon: FileText, type: 'nav' },
+              { label: 'All Files', icon: FileText, type: 'nav' },
               { label: 'New Note', icon: SquarePen, type: 'action' },
               { label: 'Class Schedule', icon: Calendar, type: 'nav' }
             ].map((item) => {
@@ -815,7 +815,7 @@ export default function App() {
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs font-bold text-[#8A7977]">
           <button 
-            onClick={() => { setSelectedFolder(null); setActiveNav('All Notes'); }}
+            onClick={() => { setSelectedFolder(null); setActiveNav('All Files'); }}
             className="hover:text-[#8C5E32] flex items-center gap-1 transition-colors"
           >
             <Home size={14} />
@@ -1028,7 +1028,7 @@ export default function App() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-black tracking-widest text-[#8A7977] uppercase">
-                  {selectedFolder ? `Notes: ${selectedFolder}` : 'All Notes'} ({filteredNotes.length})
+                  {selectedFolder ? `${selectedFolder}` : 'All Files'} ({filteredNotes.length})
                 </h2>
 
                 {selectedFolder && (
@@ -1211,62 +1211,51 @@ export default function App() {
       {/* MODAL: Add New Note */}
       {isNoteModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#4A3E3C]/30 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E8DAC8] rounded-3xl shadow-xl w-full max-w-md p-6 space-y-4">
+          <div className="bg-white border border-[#E8DAC8] rounded-3xl shadow-xl w-full max-w-md p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-[#F3E5D8] pb-3">
-              <h3 className="font-extrabold text-[#4A3E3C] text-base">Create New Note 📝</h3>
+              <h3 className="font-extrabold text-[#4A3E3C] text-base">New Note ✏️</h3>
               <button onClick={() => setIsNoteModalOpen(false)} className="text-[#8A7977] hover:text-[#4A3E3C]">
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleAddNote} className="space-y-3">
+            <form onSubmit={handleAddNote} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#8A7977] mb-1">Note Title</label>
+                <label className="block text-xs font-bold text-[#8A7977] mb-1.5">Title</label>
                 <input
                   type="text"
-                  placeholder="Enter note title..."
+                  placeholder="Judul catatan..."
                   required
-                  className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-[#C89B68]"
+                  className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl px-3.5 py-2.5 text-sm font-semibold text-[#4A3E3C] focus:outline-none focus:border-[#C89B68] focus:ring-1 focus:ring-[#C89B68]/30 transition-all"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#8A7977] mb-1">Course / Folder</label>
-                <input
-                  type="text"
-                  placeholder="Course name (e.g. Algorithms)"
-                  className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-[#C89B68]"
-                  value={newCourse}
-                  onChange={(e) => setNewCourse(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#8A7977] mb-1">Note Content</label>
+                <label className="block text-xs font-bold text-[#8A7977] mb-1.5">Content</label>
                 <textarea
-                  rows={4}
-                  placeholder="Write your note content here..."
-                  className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl p-3 text-xs font-medium focus:outline-none"
+                  rows={5}
+                  placeholder="Tulis isi catatan di sini..."
+                  className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl p-3.5 text-sm font-medium text-[#4A3E3C] focus:outline-none focus:border-[#C89B68] focus:ring-1 focus:ring-[#C89B68]/30 transition-all resize-none"
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-1 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsNoteModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#8A7977]"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#8A7977] hover:bg-[#FAF4EC] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#C89B68] text-white text-xs font-bold shadow-sm"
+                  className="px-5 py-2.5 rounded-xl bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-bold shadow-sm transition-all active:scale-95"
                 >
-                  Save Note
+                  Save
                 </button>
               </div>
             </form>
