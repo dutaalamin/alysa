@@ -247,6 +247,15 @@ export default function App() {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
 
+  // Theme State (Pastel 🌸, Snoopy Red 🐶, Dark 🌙)
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    return localStorage.getItem('stoody_theme') || 'pastel';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('stoody_theme', currentTheme);
+  }, [currentTheme]);
+
   const fileInputRef = useRef(null);
 
   const getBlobUrlIfNeeded = (url) => {
@@ -409,13 +418,33 @@ export default function App() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      setAuthError(err.message || 'Gagal login dengan Google');
+    }
+  };
+
   const handleDemoAccountSwitch = (name, email) => {
+    const isBudi = name.toLowerCase() === 'budi';
     const demoUser = {
-      id: `demo-${name.toLowerCase()}`,
+      id: isBudi ? 'demo-budi' : 'demo-alysa',
       email: email,
       user_metadata: { full_name: name }
     };
     setCurrentUser(demoUser);
+    if (isBudi) {
+      setCurrentTheme('snoopy');
+    } else {
+      setCurrentTheme('pastel');
+    }
     setIsAuthModalOpen(false);
   };
 
@@ -603,8 +632,23 @@ export default function App() {
     }
   };
 
+  // Derive user notes & folders based on logged in user identity
+  const userNotes = useMemo(() => {
+    if (!currentUser || currentUser.id === 'demo-alysa') {
+      return notes.filter(n => !n.user_id || n.user_id === 'demo-alysa' || n.user_id === 'alysa');
+    }
+    return notes.filter(n => n.user_id === currentUser.id);
+  }, [notes, currentUser?.id]);
+
+  const userFolders = useMemo(() => {
+    if (!currentUser || currentUser.id === 'demo-alysa') {
+      return folders.filter(f => !f.user_id || f.user_id === 'demo-alysa' || f.user_id === 'alysa');
+    }
+    return folders.filter(f => f.user_id === currentUser.id);
+  }, [folders, currentUser?.id]);
+
   // Filter notes
-  const filteredNotes = notes.filter(n => {
+  const filteredNotes = userNotes.filter(n => {
     const matchesNav = 
       activeNav === 'All Files' ? true :
       activeNav === 'Photos / Slides' ? (n.images && n.images.length > 0) :
@@ -1165,6 +1209,22 @@ export default function App() {
             <div className="flex items-center gap-1.5 bg-[#FAF0E6] border border-[#E8DAC8] px-3 py-1.5 rounded-full text-[11px] font-bold text-[#8C5E32] shadow-sm">
               <Cloud size={13} className={isSyncing ? "animate-pulse text-[#C89B68]" : "text-[#8C5E32]"} />
               <span>{isSyncing ? 'Syncing...' : 'Cloud Synced'}</span>
+            </div>
+
+            {/* Theme Selector Pill Badge */}
+            <div className="flex items-center gap-1.5 bg-white border border-[#E8DAC8] px-3 py-1.5 rounded-full text-xs font-extrabold shadow-sm">
+              <span className="text-xs">
+                {currentTheme === 'snoopy' ? '🐶' : currentTheme === 'dark' ? '🌙' : '🌸'}
+              </span>
+              <select
+                value={currentTheme}
+                onChange={(e) => setCurrentTheme(e.target.value)}
+                className="bg-transparent border-0 text-xs font-extrabold text-[#4A3E3C] focus:outline-none cursor-pointer"
+              >
+                <option value="pastel">🌸 Pastel Warm</option>
+                <option value="snoopy">🐶 Snoopy Red</option>
+                <option value="dark">🌙 Dark Midnight</option>
+              </select>
             </div>
 
             {/* User Profile Badge (Desktop) */}
@@ -2178,6 +2238,30 @@ export default function App() {
                   )}
                 </button>
               </form>
+
+              {/* Divider & Google OAuth Login Button */}
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[#E8DAC8]"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-[#FAF4EC] px-3 text-[#8A7977] font-bold">atau</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                className="w-full bg-white hover:bg-gray-50 text-[#4A3E3C] border border-[#E8DAC8] hover:border-[#C89B68] font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all flex items-center justify-center gap-2.5 active:scale-95 mb-4"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Lanjutkan dengan Google</span>
+              </button>
 
               {/* Demo Account Switcher */}
               <div className="mt-6 pt-5 border-t border-[#E8DAC8] text-center">
