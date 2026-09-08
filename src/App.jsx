@@ -311,6 +311,15 @@ export default function App() {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
 
+  // Profile Dropdown & Password Change States
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   // Automatic Theme Assignment: Budi -> Snoopy Red, Alysa / default -> Pastel Warm
   const currentTheme = useMemo(() => {
     if (!currentUser) return 'pastel';
@@ -1357,30 +1366,81 @@ export default function App() {
 
 
 
-            {/* Modern User Profile Badge (Desktop) */}
+            {/* Sleek Circular User Profile Avatar Button & Floating Dropdown */}
             {currentUser ? (
-              <div className={`hidden md:flex items-center gap-2.5 ${t.bgInput} border ${t.border} px-3.5 py-1.5 rounded-2xl shadow-sm hover:shadow-md transition-all`}>
-                <div className="relative flex items-center justify-center">
-                  <div className={`w-7 h-7 rounded-full ${t.bgAccent} text-white flex items-center justify-center text-xs font-black shadow-xs`}>
-                    {currentUser.user_metadata?.full_name ? currentUser.user_metadata.full_name[0].toUpperCase() : '👤'}
-                  </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className={`text-xs font-extrabold ${t.textMain} leading-tight`}>
-                    {currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User Stoody'}
-                  </span>
-                  <span className={`text-[9px] font-bold ${t.textMuted}`}>
-                    {currentUser.id === 'demo-budi' ? '🧢 Workspace Budi' : currentUser.id === 'demo-alysa' ? '🌸 Workspace Alysa' : '✨ Stoody Member'}
-                  </span>
-                </div>
+              <div className="relative">
                 <button
-                  onClick={handleSignOut}
-                  title="Keluar / Sign Out"
-                  className="text-xs font-bold text-red-500 hover:bg-red-50 p-1.5 rounded-full ml-1 transition-all"
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className={`relative w-9 h-9 rounded-full ${t.bgAccent} text-white font-black text-sm flex items-center justify-center shadow-md hover:scale-105 transition-all ring-2 ring-white/60 focus:outline-none cursor-pointer`}
+                  title="User Account Menu"
                 >
-                  <LogOut size={13} />
+                  {currentUser.user_metadata?.full_name ? currentUser.user_metadata.full_name[0].toUpperCase() : '👤'}
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
                 </button>
+
+                {/* Floating Dropdown Menu */}
+                <AnimatePresence>
+                  {isProfileDropdownOpen && (
+                    <>
+                      {/* Backdrop Listener */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      />
+
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        transition={{ duration: 0.15 }}
+                        className={`absolute right-0 mt-2.5 w-64 ${t.bgCard} border ${t.border} rounded-2xl shadow-2xl z-50 p-3.5 space-y-3 overflow-hidden backdrop-blur-md`}
+                      >
+                        {/* User Header Info */}
+                        <div className={`p-3 rounded-xl ${t.bgCardSubtle} border ${t.border} flex items-center gap-3`}>
+                          <div className={`w-10 h-10 rounded-full ${t.bgAccent} text-white font-black text-base flex items-center justify-center shadow-sm flex-shrink-0`}>
+                            {currentUser.user_metadata?.full_name ? currentUser.user_metadata.full_name[0].toUpperCase() : '👤'}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-xs font-extrabold ${t.textMain} truncate`}>
+                              {currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Stoody User'}
+                            </p>
+                            <p className={`text-[10px] ${t.textMuted} truncate`}>
+                              {currentUser.email || 'user@stoody.id'}
+                            </p>
+                            <span className={`inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${t.badgeBg} ${t.badgeText}`}>
+                              {currentUser.id === 'demo-budi' ? '🧢 Workspace Budi' : currentUser.id === 'demo-alysa' ? '🌸 Workspace Alysa' : '✨ Stoody Member'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action List */}
+                        <div className="space-y-1">
+                          <button
+                            onClick={() => {
+                              setIsProfileDropdownOpen(false);
+                              setIsChangePasswordModalOpen(true);
+                            }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold ${t.textMain} hover:${t.bgCardSubtle} transition-all`}
+                          >
+                            <Lock size={15} className={t.textAccent} />
+                            <span>Change Password</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setIsProfileDropdownOpen(false);
+                              handleSignOut();
+                            }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-all"
+                          >
+                            <LogOut size={15} />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
               <button
@@ -1388,7 +1448,7 @@ export default function App() {
                 className={`hidden md:flex items-center gap-1.5 ${t.bgAccent} ${t.bgAccentHover} text-white font-extrabold text-xs px-3.5 py-1.5 rounded-2xl shadow-sm transition-all active:scale-95`}
               >
                 <LogIn size={13} />
-                <span>Masuk / Daftar</span>
+                <span>Sign In</span>
               </button>
             )}
           </div>
@@ -2396,6 +2456,118 @@ export default function App() {
                   </button>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CHANGE PASSWORD MODAL */}
+      <AnimatePresence>
+        {isChangePasswordModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#FAF4EC] border border-[#E8DAC8] rounded-3xl p-6 max-w-sm w-full shadow-2xl relative"
+            >
+              <button
+                onClick={() => setIsChangePasswordModalOpen(false)}
+                className="absolute top-4 right-4 p-2 text-[#8A7977] hover:text-[#4A3E3C] rounded-full transition-all"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-[#C89B68] text-white flex items-center justify-center shadow-sm">
+                  <Lock size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#4A3E3C]">Change Password</h3>
+                  <p className="text-[11px] text-[#8A7977]">Update your account password</p>
+                </div>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (newPassword !== confirmPassword) {
+                    setPasswordError("Passwords do not match");
+                    return;
+                  }
+                  setPasswordLoading(true);
+                  try {
+                    const { error } = await supabase.auth.updateUser({ password: newPassword });
+                    if (error) throw error;
+                    setPasswordSuccess("Password updated successfully!");
+                    setTimeout(() => {
+                      setIsChangePasswordModalOpen(false);
+                      setPasswordSuccess("");
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }, 1200);
+                  } catch (err) {
+                    setPasswordError(err.message || "Failed to update password");
+                  } finally {
+                    setPasswordLoading(false);
+                  }
+                }}
+                className="space-y-3.5"
+              >
+                {passwordError && (
+                  <div className="p-2.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl">
+                    {passwordError}
+                  </div>
+                )}
+                {passwordSuccess && (
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl">
+                    {passwordSuccess}
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold text-[#4A3E3C] uppercase">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => { setNewPassword(e.target.value); setPasswordError(""); }}
+                    className="w-full bg-white border border-[#E8DAC8] rounded-xl px-3 py-2 text-xs text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold text-[#4A3E3C] uppercase">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(""); }}
+                    className="w-full bg-white border border-[#E8DAC8] rounded-xl px-3 py-2 text-xs text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 font-medium"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsChangePasswordModalOpen(false)}
+                    className="flex-1 bg-[#FAF0E6] border border-[#E8DAC8] text-[#4A3E3C] font-bold text-xs py-2.5 rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="flex-1 bg-[#C89B68] hover:bg-[#B88B58] text-white font-extrabold text-xs py-2.5 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {passwordLoading ? 'Updating...' : 'Save Password'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
