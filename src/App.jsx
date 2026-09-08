@@ -515,6 +515,9 @@ export default function App() {
         }
       } else {
         // For documents (PPT, PDF, Word, Excel, etc.)
+        if (!filePublicUrl) {
+          filePublicUrl = await readDocumentAsDataURL(file);
+        }
         if (filePublicUrl) {
           contentText = `[${fileTypeLabel}] ${file.name}\n\n📥 DOWNLOAD_URL: ${filePublicUrl}`;
         }
@@ -659,6 +662,55 @@ export default function App() {
       setScanningId(null);
       setScanStatus(prev => ({ ...prev, [noteId]: null }));
     }
+  };
+
+  const handleAttachFileToNote = (note) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,image/*';
+    input.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setScanningId(note.id);
+        setScanStatus(prev => ({ ...prev, [note.id]: 'Mengunggah & membaca file...' }));
+        
+        let filePublicUrl = null;
+        try {
+          const storagePath = `uploads/${Date.now()}_${file.name}`;
+          const { data: uploadData } = await supabase.storage.from('notes-files').upload(storagePath, file, { upsert: true });
+          if (uploadData) {
+            const { data: urlData } = supabase.storage.from('notes-files').getPublicUrl(storagePath);
+            filePublicUrl = urlData?.publicUrl || null;
+          }
+        } catch (storageErr) {
+          console.log('Storage notice:', storageErr);
+        }
+
+        if (!filePublicUrl) {
+          filePublicUrl = await readDocumentAsDataURL(file);
+        }
+
+        let updatedContent = `[Document File] ${file.name}\n\n📥 DOWNLOAD_URL: ${filePublicUrl}`;
+        try {
+          const extractedText = await extractTextFromFile(file, file.name);
+          if (extractedText && !extractedText.startsWith('(')) {
+            updatedContent += `\n\n--- 📑 Hasil Ekstraksi Teks (${file.name}) ---\n` + extractedText;
+          }
+        } catch (err) {
+          console.log('Extract error:', err);
+        } finally {
+          setScanningId(null);
+          setScanStatus(prev => ({ ...prev, [note.id]: null }));
+        }
+
+        await supabase.from('notes').update({ content: updatedContent, ocr_extracted: true }).eq('id', note.id);
+        setNotes(prev => prev.map(n => n.id === note.id ? { ...n, content: updatedContent, ocrExtracted: true } : n));
+        if (activeNoteModal && activeNoteModal.id === note.id) {
+          setActiveNoteModal(prev => ({ ...prev, content: updatedContent, ocrExtracted: true }));
+        }
+      }
+    };
+    input.click();
   };
 
   const totalClassesCount = Object.values(SCHEDULE_DATA).flat().length;
@@ -1621,46 +1673,61 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* Document Control Widget with AI Extract Button */}
-                    {(isDoc || downloadUrl) && (
-                      <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-xs uppercase shadow-sm">
-                            {fileExt || 'FILE'}
-                          </div>
-                          <div>
-                            <p className="text-xs font-extrabold text-[#4A3E3C] truncate max-w-xs">{activeNoteModal.title}</p>
-                            <p className="text-[10px] text-[#8A7977] font-semibold">Dokumen {fileExt.toUpperCase()} • Siap Dibaca AI</p>
-                          </div>
+                    {/* Document Control Widget with AI Extract & Download File Buttons */}
+                    <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-xs uppercase shadow-sm">
+                          {fileExt || 'FILE'}
                         </div>
+                        <div>
+                          <p className="text-xs font-extrabold text-[#4A3E3C] truncate max-w-xs">{activeNoteModal.title}</p>
+                          <p className="text-[10px] text-[#8A7977] font-semibold">
+                            {downloadUrl ? `Dokumen ${fileExt.toUpperCase()} • Ready` : 'Belum Terhubung File Asli'}
+                          </p>
+                        </div>
+                      </div>
 
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <button
-                            onClick={() => handleRealAIScan(activeNoteModal)}
-                            disabled={scanningId === activeNoteModal.id}
-                            className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
-                          >
-                            <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
-                            <span>
-                              {scanningId === activeNoteModal.id
-                                ? (scanStatus[activeNoteModal.id] || 'Membaca dokumen...')
-                                : '✨ AI Baca Teks Dokumen'}
-                            </span>
-                          </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {downloadUrl ? (
+                          <>
+                            <button
+                              onClick={() => handleRealAIScan(activeNoteModal)}
+                              disabled={scanningId === activeNoteModal.id}
+                              className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                              <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
+                              <span>
+                                {scanningId === activeNoteModal.id
+                                  ? (scanStatus[activeNoteModal.id] || 'Membaca dokumen...')
+                                  : '✨ AI Baca Teks'}
+                              </span>
+                            </button>
 
-                          {downloadUrl && (
                             <a
                               href={downloadUrl}
                               download={activeNoteModal.title}
-                              className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-bold py-2 px-3 rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95"
+                              className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95"
                             >
-                              <Download size={14} />
-                              <span>Download</span>
+                              <Download size={14} className="text-[#C89B68]" />
+                              <span>Download PDF / File Asli</span>
                             </a>
-                          )}
-                        </div>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleAttachFileToNote(activeNoteModal)}
+                            disabled={scanningId === activeNoteModal.id}
+                            className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-extrabold py-2 px-4 rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
+                          >
+                            <Upload size={14} />
+                            <span>
+                              {scanningId === activeNoteModal.id
+                                ? (scanStatus[activeNoteModal.id] || 'Mengunggah file...')
+                                : '📤 Hubungkan File PDF / Baca AI'}
+                            </span>
+                          </button>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })()}
