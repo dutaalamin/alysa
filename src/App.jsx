@@ -1854,7 +1854,7 @@ export default function App() {
                   <div className="flex items-center gap-2">
                     <FileText size={15} className="text-[#8C5E32]" />
                     <span className="text-xs font-extrabold text-[#4A3E3C] uppercase tracking-wider">
-                      Isi Catatan / Extracted Text
+                      {activeNoteModal.ocr_extracted || activeNoteModal.ocrExtracted ? 'Isi Catatan (Hasil Baca AI)' : 'Isi Catatan'}
                     </span>
                   </div>
                   
