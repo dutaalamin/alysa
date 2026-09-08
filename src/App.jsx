@@ -172,7 +172,7 @@ function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle 
         </span>
         {showSubtitle && (
           <p className="text-xs text-[#8A7977] font-semibold mt-0.5 tracking-normal">
-            Ruang Catatan & Materi Kuliah Aesthetic
+            Smart Cloud Drive & AI Note Workspace
           </p>
         )}
       </div>
