@@ -513,7 +513,7 @@ export default function App() {
         if (error) throw error;
         if (data.user) {
           setCurrentUser(data.user);
-          setAuthSuccess('Pendaftaran berhasil! Akun Anda siap digunakan.');
+          setAuthSuccess('Account registered successfully! Welcome to Stoody.');
           setTimeout(() => {
             setIsAuthModalOpen(false);
             setAuthSuccess('');
@@ -521,7 +521,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      setAuthError(err.message || 'Terjadi kesalahan saat otentikasi');
+      setAuthError(err.message || 'Authentication error occurred');
     } finally {
       setAuthLoading(false);
     }
@@ -2019,7 +2019,7 @@ export default function App() {
                                 className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer"
                               >
                                 <ExternalLink size={12} />
-                                <span>Buka Fullscreen</span>
+                                <span>Fullscreen Preview</span>
                               </button>
                             </div>
                             <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5] shadow-inner">
@@ -2041,7 +2041,7 @@ export default function App() {
                                 className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer"
                               >
                                 <ExternalLink size={12} />
-                                <span>Buka Dokumen</span>
+                                <span>Open Document</span>
                               </button>
                             </div>
                             <div className="w-full h-[450px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#FAF4EC] shadow-sm">
@@ -2066,7 +2066,7 @@ export default function App() {
                           <div>
                             <p className="text-xs font-extrabold text-[#4A3E3C] truncate max-w-xs">{activeNoteModal.title}</p>
                             <p className="text-[10px] text-[#8A7977] font-semibold">
-                              {downloadUrl ? `Dokumen ${fileExt.toUpperCase()} • Ready` : 'Belum Terhubung File Asli'}
+                              {downloadUrl ? `${fileExt.toUpperCase()} Document • Ready` : 'No original file attached'}
                             </p>
                           </div>
                         </div>
@@ -2082,8 +2082,8 @@ export default function App() {
                                 <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
                                 <span>
                                   {scanningId === activeNoteModal.id
-                                    ? (scanStatus[activeNoteModal.id] || 'Membaca dokumen...')
-                                    : 'AI Baca Teks'}
+                                    ? (scanStatus[activeNoteModal.id] || 'Analyzing document...')
+                                    : 'AI Text OCR'}
                                 </span>
                               </button>
 
@@ -2093,7 +2093,7 @@ export default function App() {
                                 className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95"
                               >
                                 <Download size={14} className="text-[#C89B68]" />
-                                <span>Download File {fileExt ? fileExt.toUpperCase() : 'Asli'}</span>
+                                <span>Download Original File</span>
                               </a>
                             </>
                           ) : (
@@ -2105,8 +2105,8 @@ export default function App() {
                               <Upload size={14} />
                               <span>
                                 {scanningId === activeNoteModal.id
-                                  ? (scanStatus[activeNoteModal.id] || 'Mengunggah file...')
-                                  : '📤 Hubungkan File PDF / Baca AI'}
+                                  ? (scanStatus[activeNoteModal.id] || 'Uploading file...')
+                                  : '📤 Attach PDF / AI Scan'}
                               </span>
                             </button>
                           )}
@@ -2123,7 +2123,7 @@ export default function App() {
                   <div className="flex items-center gap-2">
                     <FileText size={15} className="text-[#8C5E32]" />
                     <span className="text-xs font-extrabold text-[#4A3E3C] uppercase tracking-wider">
-                      {activeNoteModal.ocr_extracted || activeNoteModal.ocrExtracted ? 'Isi Catatan (Hasil Baca AI)' : 'Isi Catatan'}
+                      {activeNoteModal.ocr_extracted || activeNoteModal.ocrExtracted ? 'Note Content (AI Extracted)' : 'Note Content'}
                     </span>
                   </div>
                   
@@ -2136,7 +2136,7 @@ export default function App() {
                       className="text-xs font-bold text-[#8C5E32] hover:text-[#5C3E20] bg-white border border-[#E8DAC8] hover:border-[#C89B68] hover:bg-[#FAF0E6] px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
                     >
                       <SquarePen size={13} />
-                      <span>Edit Teks</span>
+                      <span>Edit Text</span>
                     </button>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -2144,14 +2144,14 @@ export default function App() {
                         onClick={() => setIsEditingText(false)}
                         className="text-xs font-bold text-[#8A7977] hover:bg-[#E8DAC8] px-2.5 py-1.5 rounded-xl transition-all"
                       >
-                        Batal
+                        Cancel
                       </button>
                       <button
                         onClick={handleSaveEditedText}
                         className="text-xs font-bold text-white bg-[#C89B68] hover:bg-[#B88B58] px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
                       >
                         <CheckCircle2 size={13} />
-                        <span>Simpan Perubahan</span>
+                        <span>Save Changes</span>
                       </button>
                     </div>
                   )}
@@ -2163,11 +2163,11 @@ export default function App() {
                       value={editTextContent}
                       onChange={(e) => setEditTextContent(e.target.value)}
                       rows={8}
-                      placeholder="Ketik atau edit teks catatan di sini..."
+                      placeholder="Type or edit note content here..."
                       className="w-full bg-white border-2 border-[#C89B68] rounded-xl p-3 text-sm text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 leading-relaxed font-medium transition-all shadow-inner"
                     />
                     <p className="text-[11px] text-[#8A7977] text-right">
-                      {editTextContent.length} karakter • {editTextContent.trim() ? editTextContent.trim().split(/\s+/).length : 0} kata
+                      {editTextContent.length} characters • {editTextContent.trim() ? editTextContent.trim().split(/\s+/).length : 0} words
                     </p>
                   </div>
                 ) : (
@@ -2177,7 +2177,7 @@ export default function App() {
                     </div>
                   ) : (
                     <div className="text-center py-4 text-[#8A7977] text-xs italic">
-                      Belum ada teks catatan. Klik tombol <span className="font-bold text-[#8C5E32] not-italic">"Edit Teks"</span> di atas untuk mulai menulis catatan.
+                      No text content yet. Click <span className="font-bold text-[#8C5E32] not-italic">"Edit Text"</span> above to begin writing notes.
                     </div>
                   )
                 )}
@@ -2248,7 +2248,7 @@ export default function App() {
                     authMode === 'login' ? 'bg-white text-[#8C5E32] shadow-sm' : 'text-[#8A7977] hover:text-[#4A3E3C]'
                   }`}
                 >
-                  Masuk (Login)
+                  Sign In
                 </button>
                 <button
                   onClick={() => { setAuthMode('register'); setAuthError(''); setAuthSuccess(''); }}
@@ -2256,7 +2256,7 @@ export default function App() {
                     authMode === 'register' ? 'bg-white text-[#8C5E32] shadow-sm' : 'text-[#8A7977] hover:text-[#4A3E3C]'
                   }`}
                 >
-                  Daftar Akun Baru
+                  Create Account
                 </button>
               </div>
 
@@ -2276,11 +2276,11 @@ export default function App() {
               <form onSubmit={handleAuthSubmit} className="space-y-4">
                 {authMode === 'register' && (
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Nama Lengkap</label>
+                    <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Full Name</label>
                     <input
                       type="text"
                       required
-                      placeholder="Contoh: Alysa / Budi"
+                      placeholder="Alysa Williams"
                       value={authName}
                       onChange={(e) => setAuthName(e.target.value)}
                       className="w-full bg-white border border-[#E8DAC8] rounded-xl px-3.5 py-2.5 text-xs text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 font-medium"
@@ -2289,11 +2289,11 @@ export default function App() {
                 )}
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Email / Username</label>
+                  <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Email or Username</label>
                   <input
                     type="text"
                     required
-                    placeholder="Misal: alysa atau budi"
+                    placeholder="alysa@stoody.id"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
                     className="w-full bg-white border border-[#E8DAC8] rounded-xl px-3.5 py-2.5 text-xs text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 font-medium"
@@ -2301,11 +2301,11 @@ export default function App() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Kata Sandi (Password)</label>
+                  <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Password</label>
                   <input
                     type="password"
                     required
-                    placeholder="alysa123 atau budi123"
+                    placeholder="••••••••"
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
                     className="w-full bg-white border border-[#E8DAC8] rounded-xl px-3.5 py-2.5 text-xs text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 font-medium"
@@ -2320,7 +2320,7 @@ export default function App() {
                   {authLoading ? (
                     <Sparkles size={16} className="animate-spin" />
                   ) : (
-                    <span>{authMode === 'login' ? 'Masuk ke Stoody' : 'Buat Akun Stoody Baru'}</span>
+                    <span>{authMode === 'login' ? 'Sign In to Stoody' : 'Create Stoody Account'}</span>
                   )}
                 </button>
               </form>
@@ -2328,20 +2328,20 @@ export default function App() {
               {/* Demo Account Switcher */}
               <div className="mt-6 pt-5 border-t border-[#E8DAC8] text-center">
                 <p className="text-[11px] text-[#8A7977] font-semibold mb-2.5">
-                  ⚡ Pengujian Cepat Multi-User (Coba Akun Demo):
+                  ⚡ Quick Demo Access:
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => handleDemoAccountSwitch('Alysa', 'alysa@stoody.id')}
                     className="bg-white border border-[#E8DAC8] hover:border-[#C89B68] text-[#8C5E32] text-xs font-bold py-1.5 px-3 rounded-xl transition-all shadow-xs active:scale-95"
                   >
-                    🌸 Akun Alysa
+                    🌸 Alysa Account
                   </button>
                   <button
                     onClick={() => handleDemoAccountSwitch('Budi', 'budi@stoody.id')}
                     className="bg-white border border-[#E8DAC8] hover:border-[#C89B68] text-[#8C5E32] text-xs font-bold py-1.5 px-3 rounded-xl transition-all shadow-xs active:scale-95"
                   >
-                    🧢 Akun Budi
+                    🧢 Budi Account
                   </button>
                 </div>
               </div>
