@@ -23,7 +23,8 @@ import {
   Calendar,
   MapPin,
   Building2,
-  Info
+  Info,
+  Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './supabaseClient';
@@ -166,6 +167,7 @@ export default function App() {
   const [previewImage, setPreviewImage] = useState(null);
   const [scanningId, setScanningId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // New Note Form
   const [newTitle, setNewTitle] = useState('');
@@ -371,10 +373,135 @@ export default function App() {
   const totalClassesCount = Object.values(SCHEDULE_DATA).flat().length;
 
   return (
-    <div className="flex h-screen w-screen bg-[#FFF9F2] text-[#4A3E3C] overflow-hidden font-sans">
+    <div className="flex flex-col md:flex-row h-screen w-screen bg-[#FFF9F2] text-[#4A3E3C] overflow-hidden font-sans">
       
-      {/* LEFT SIDEBAR (Cream Theme) */}
-      <aside className="w-[280px] bg-[#FAF4EC]/90 border-r border-[#E8DAC8] p-5 flex flex-col justify-between shadow-sm backdrop-blur-md">
+      {/* MOBILE TOP HEADER BAR (Mobile screens only) */}
+      <div className="flex md:hidden items-center justify-between p-4 bg-[#FAF4EC] border-b border-[#E8DAC8]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#C89B68] flex items-center justify-center text-white shadow-sm">
+            <BookOpen size={16} className="fill-white/20" />
+          </div>
+          <h1 className="text-lg font-extrabold text-[#4A3E3C]">Stoody</h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-white border border-[#E8DAC8] px-2.5 py-1 rounded-full text-xs font-extrabold">
+            <span>🌸</span>
+            <span>Alysa</span>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-xl bg-white border border-[#E8DAC8] text-[#4A3E3C] shadow-sm"
+          >
+            {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
+      </div>
+
+      {/* MOBILE DRAWER NAVIGATION MENU */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: -280 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -280 }}
+            className="fixed inset-0 z-40 bg-[#4A3E3C]/30 backdrop-blur-sm md:hidden flex"
+          >
+            <div className="w-[280px] bg-[#FAF4EC] h-full p-5 flex flex-col justify-between border-r border-[#E8DAC8] shadow-xl">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#C89B68] flex items-center justify-center text-white shadow-sm">
+                      <BookOpen size={16} className="fill-white/20" />
+                    </div>
+                    <h1 className="text-lg font-extrabold text-[#4A3E3C]">Stoody</h1>
+                  </div>
+                  <button onClick={() => setIsMobileMenuOpen(false)} className="text-[#8A7977]">
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    onClick={() => { setIsNoteModalOpen(true); setIsMobileMenuOpen(false); }}
+                    className="w-full bg-[#C89B68] text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} />
+                    <span>New Note</span>
+                  </button>
+                  <button
+                    onClick={() => { setIsFolderModalOpen(true); setIsMobileMenuOpen(false); }}
+                    className="w-full bg-[#FAF0E6] text-[#4A3E3C] border border-[#E8DAC8] font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2"
+                  >
+                    <FolderPlus size={15} className="text-[#C89B68]" />
+                    <span>Course Folder</span>
+                  </button>
+                </div>
+
+                <nav className="space-y-1 pt-2">
+                  {[
+                    { label: 'All Notes', icon: FileText, count: notes.length },
+                    { label: 'Class Schedule', icon: Calendar, count: totalClassesCount },
+                    { label: 'Pinned', icon: Pin, count: notes.filter(n => n.pinned).length },
+                    { label: 'Photos / Slides', icon: ImageIcon, count: notes.filter(n => n.images && n.images.length > 0).length },
+                    { label: 'AI Scan', icon: Sparkles, count: notes.filter(n => n.ocrExtracted).length }
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeNav === item.label && !selectedFolder;
+                    return (
+                      <button
+                        key={item.label}
+                        onClick={() => {
+                          setActiveNav(item.label);
+                          setSelectedFolder(null);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                          isActive 
+                            ? 'bg-[#F3E5D8] text-[#8C5E32] shadow-sm' 
+                            : 'text-[#8A7977] hover:bg-[#F7EFE5] hover:text-[#4A3E3C]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon size={16} className={isActive ? 'text-[#8C5E32]' : 'text-[#8A7977]'} />
+                          <span>{item.label}</span>
+                        </div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+                          isActive ? 'bg-[#E8D4C1] text-[#7A5430]' : 'bg-[#FAF0E6] text-[#8A7977]'
+                        }`}>
+                          {item.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              <div className="bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl p-4 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-[#8A7977] flex items-center gap-1.5">
+                    <BookOpen size={14} className="text-[#C89B68]" />
+                    Note Storage
+                  </span>
+                  <span className="font-bold text-[#8C5E32]">0% used</span>
+                </div>
+                <div className="w-full h-1.5 bg-[#E8DAC8] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#C89B68] w-[2%] rounded-full"></div>
+                </div>
+                <p className="text-[10px] text-[#8A7977] font-medium flex items-center gap-1">
+                  <CheckCircle2 size={11} className="text-[#8C5E32]" />
+                  Storage Connected
+                </p>
+              </div>
+            </div>
+
+            <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)}></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* DESKTOP SIDEBAR (Cream Theme - hidden on mobile) */}
+      <aside className="hidden md:flex w-[280px] bg-[#FAF4EC]/90 border-r border-[#E8DAC8] p-5 flex-col justify-between shadow-sm backdrop-blur-md">
         <div className="space-y-6">
           
           {/* Logo Header */}
