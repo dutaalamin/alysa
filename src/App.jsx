@@ -198,8 +198,31 @@ export default function App() {
 
   // New Folder Form
   const [newFolderName, setNewFolderName] = useState('');
+  const [activeNoteModal, setActiveNoteModal] = useState(null);
 
   const fileInputRef = useRef(null);
+
+  const handleDownloadFile = (fileUrlOrData, fileName) => {
+    const link = document.createElement('a');
+    link.href = fileUrlOrData;
+    link.download = fileName || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadTextAsFile = (title, content) => {
+    const cleanContent = (content || '').replace(/\n\n📥 DOWNLOAD_URL: .+/, '');
+    const blob = new Blob([cleanContent || title], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title || 'note'}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const [isCloudConnected, setIsCloudConnected] = useState(true);
 
@@ -1085,7 +1108,8 @@ export default function App() {
                           initial={{ opacity: 0, scale: 0.96 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.96 }}
-                          className="bg-white border border-[#E8DAC8] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col justify-between group"
+                          onClick={() => setActiveNoteModal(note)}
+                          className="bg-white border border-[#E8DAC8] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col justify-between group cursor-pointer"
                         >
                           <div>
                             {/* Header Card */}
@@ -1095,7 +1119,10 @@ export default function App() {
                               </span>
 
                               <button
-                                onClick={() => handleDeleteNote(note.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNote(note.id);
+                                }}
                                 className="p-1 text-[#8A7977] hover:text-[#A04040] rounded-full transition-colors"
                                 title="Delete note"
                               >
@@ -1132,6 +1159,7 @@ export default function App() {
                                       <a
                                         href={downloadUrl}
                                         download={note.title}
+                                        onClick={(e) => e.stopPropagation()}
                                         className="flex-1 bg-[#C89B68] hover:bg-[#B88B58] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
                                       >
                                         <Download size={13} />
@@ -1142,6 +1170,7 @@ export default function App() {
                                         href={downloadUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
                                         className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
                                       >
                                         <ExternalLink size={13} />
@@ -1159,7 +1188,7 @@ export default function App() {
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <p className="text-xs font-bold text-[#4A3E3C] truncate">{note.title}</p>
-                                        <p className="text-[10px] text-[#8A7977]">Re-upload to enable download</p>
+                                        <p className="text-[10px] text-[#8A7977]">Click card to view details</p>
                                       </div>
                                     </div>
                                   </div>
@@ -1174,8 +1203,11 @@ export default function App() {
                                 {note.images.map((img, i) => (
                                   <div
                                     key={i}
-                                    onClick={() => setPreviewImage(img)}
-                                    className="relative h-32 rounded-xl overflow-hidden cursor-pointer border border-[#E8DAC8] group/img"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPreviewImage(img);
+                                    }}
+                                    className="relative h-36 rounded-xl overflow-hidden cursor-pointer border border-[#E8DAC8] group/img"
                                   >
                                     <img
                                       src={img}
@@ -1184,17 +1216,30 @@ export default function App() {
                                       decoding="async"
                                       className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 bg-[#F7EFE5]"
                                     />
-                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
-                                      <ImageIcon size={14} />
-                                      <span>View Photo</span>
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-between p-2 text-white">
+                                      <span className="flex items-center gap-1 text-xs font-bold bg-black/40 px-2 py-1 rounded-lg backdrop-blur-xs">
+                                        <ImageIcon size={14} />
+                                        <span>View</span>
+                                      </span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownloadFile(img, `${note.title || 'image'}.jpg`);
+                                        }}
+                                        className="bg-[#C89B68] hover:bg-[#B88B58] text-white p-1.5 rounded-lg shadow-md flex items-center gap-1 text-[10px] font-bold active:scale-95"
+                                        title="Download Image"
+                                      >
+                                        <Download size={13} />
+                                        <span>Download</span>
+                                      </button>
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             )}
 
-                            {/* Text Preview */}
-                            <p className="text-xs text-[#8A7977] whitespace-pre-line leading-relaxed line-clamp-3">
+                            {/* Text Preview (extended line-clamp and cleaner font) */}
+                            <p className="text-xs text-[#8A7977] whitespace-pre-line leading-relaxed line-clamp-6 font-medium">
                               {(note.content || '').replace(/\n\n📥 DOWNLOAD_URL: .+/, '')}
                             </p>
                           </div>
@@ -1206,16 +1251,33 @@ export default function App() {
                               {note.date} • {note.size}
                             </span>
 
-                            {note.images && note.images.length > 0 && (
+                            <div className="flex items-center gap-1.5">
                               <button
-                                onClick={() => handleSimulateAIScan(note.id)}
-                                disabled={scanningId === note.id}
-                                className="text-[10px] font-bold text-[#8C5E32] bg-[#F3E5D8] hover:bg-[#E8D4C1] px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDownloadTextAsFile(note.title, note.content);
+                                }}
+                                className="text-[10px] font-bold text-[#8C5E32] bg-[#FAF0E6] hover:bg-[#F3E5D8] border border-[#E8DAC8] px-2 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                                title="Download note as .txt file"
                               >
-                                <Sparkles size={11} className={scanningId === note.id ? 'animate-spin' : ''} />
-                                <span>{scanningId === note.id ? 'Scanning...' : 'AI Scan'}</span>
+                                <Download size={11} />
+                                <span>.txt</span>
                               </button>
-                            )}
+
+                              {note.images && note.images.length > 0 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSimulateAIScan(note.id);
+                                  }}
+                                  disabled={scanningId === note.id}
+                                  className="text-[10px] font-bold text-[#8C5E32] bg-[#F3E5D8] hover:bg-[#E8D4C1] px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                                >
+                                  <Sparkles size={11} className={scanningId === note.id ? 'animate-spin' : ''} />
+                                  <span>{scanningId === note.id ? 'Scanning...' : 'AI Scan'}</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </motion.div>
                       ))}
@@ -1341,6 +1403,142 @@ export default function App() {
             >
               <X size={20} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Full Note Detail & Download View */}
+      {activeNoteModal && (
+        <div
+          onClick={() => setActiveNoteModal(null)}
+          className="fixed inset-0 z-50 bg-[#4A3E3C]/40 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border border-[#E8DAC8] rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col p-6 space-y-4 overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-[#F3E5D8] pb-4">
+              <div className="space-y-1 pr-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
+                    {activeNoteModal.course}
+                  </span>
+                  <span className="text-[11px] font-semibold text-[#8A7977]">
+                    {activeNoteModal.date} • {activeNoteModal.size}
+                  </span>
+                </div>
+                <h2 className="font-extrabold text-[#4A3E3C] text-lg leading-snug">
+                  {activeNoteModal.title}
+                </h2>
+              </div>
+
+              <button
+                onClick={() => setActiveNoteModal(null)}
+                className="p-1.5 rounded-xl hover:bg-[#FAF4EC] text-[#8A7977] hover:text-[#4A3E3C] transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable Content Body */}
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {/* Attached Images */}
+              {activeNoteModal.images && activeNoteModal.images.length > 0 && (
+                <div className="space-y-3">
+                  {activeNoteModal.images.map((img, idx) => (
+                    <div key={idx} className="relative rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5]">
+                      <img
+                        src={img}
+                        alt="Note Attachment"
+                        className="w-full h-auto max-h-[400px] object-contain mx-auto"
+                      />
+                      <button
+                        onClick={() => handleDownloadFile(img, `${activeNoteModal.title}_image_${idx + 1}.jpg`)}
+                        className="absolute bottom-3 right-3 bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-bold py-2 px-3.5 rounded-xl shadow-md flex items-center gap-1.5 transition-all active:scale-95"
+                      >
+                        <Download size={14} />
+                        <span>Download Image</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Document Download Widget */}
+              {(() => {
+                const downloadMatch = activeNoteModal.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
+                const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
+                if (downloadUrl) {
+                  return (
+                    <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-extrabold text-[#4A3E3C]">{activeNoteModal.title}</p>
+                        <p className="text-[10px] text-[#8A7977]">Document file ready for download</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={downloadUrl}
+                          download={activeNoteModal.title}
+                          className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-bold py-2 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5 active:scale-95"
+                        >
+                          <Download size={14} />
+                          <span>Download File</span>
+                        </a>
+                        <a
+                          href={downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-bold py-2 px-3.5 rounded-xl flex items-center gap-1.5"
+                        >
+                          <ExternalLink size={14} />
+                          <span>Open</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Note Text Content */}
+              {activeNoteModal.content && (
+                <div className="bg-[#FAF4EC] border border-[#E8DAC8] rounded-2xl p-5 text-sm text-[#4A3E3C] leading-relaxed font-medium whitespace-pre-wrap select-text">
+                  {activeNoteModal.content.replace(/\n\n📥 DOWNLOAD_URL: .+/, '')}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="pt-3 border-t border-[#F3E5D8] flex items-center justify-between gap-3">
+              <button
+                onClick={() => {
+                  handleDeleteNote(activeNoteModal.id);
+                  setActiveNoteModal(null);
+                }}
+                className="text-xs font-bold text-[#A04040] hover:bg-[#FDF0F0] px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors"
+              >
+                <Trash2 size={14} />
+                <span>Delete Note</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadTextAsFile(activeNoteModal.title, activeNoteModal.content)}
+                  className="bg-[#FAF0E6] hover:bg-[#F3E5D8] text-[#4A3E3C] border border-[#E8DAC8] text-xs font-bold py-2 px-3.5 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                >
+                  <Download size={14} className="text-[#C89B68]" />
+                  <span>Download (.txt)</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveNoteModal(null)}
+                  className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-bold py-2 px-4 rounded-xl shadow-sm transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
