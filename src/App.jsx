@@ -680,6 +680,7 @@ export default function App() {
 
     const newNote = {
       id: Date.now().toString(),
+      user_id: currentUser ? currentUser.id : 'demo-alysa',
       title: newTitle,
       course: courseName,
       semester: newSemester,
@@ -710,6 +711,7 @@ export default function App() {
 
     const newFolderObj = {
       id: `f-${Date.now()}`,
+      user_id: currentUser ? currentUser.id : 'demo-alysa',
       name: newFolderName.trim()
     };
 
@@ -883,6 +885,7 @@ export default function App() {
       // Only use columns that exist in the Supabase notes table
       const newNote = {
         id: (Date.now() + i).toString(),
+        user_id: currentUser ? currentUser.id : 'demo-alysa',
         title: file.name,
         course: selectedFolder || '',
         semester: 'Semester 3',
