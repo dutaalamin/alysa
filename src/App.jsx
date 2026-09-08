@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Folder, 
   FolderPlus, 
@@ -230,6 +230,14 @@ export default function App() {
     const blobUrl = getBlobUrlIfNeeded(url);
     window.open(blobUrl, '_blank');
   };
+
+  const pdfPreviewUrl = useMemo(() => {
+    if (!activeNoteModal) return null;
+    const downloadMatch = activeNoteModal.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
+    const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
+    if (!downloadUrl) return null;
+    return getBlobUrlIfNeeded(downloadUrl);
+  }, [activeNoteModal?.id, activeNoteModal?.content]);
 
   const handleDownloadFile = (fileUrlOrData, fileName) => {
     if (!fileUrlOrData) return;
@@ -1692,7 +1700,7 @@ export default function App() {
                         </div>
                         <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5] shadow-inner">
                           <iframe
-                            src={getBlobUrlIfNeeded(downloadUrl)}
+                            src={pdfPreviewUrl}
                             className="w-full h-full border-0"
                             title={activeNoteModal.title}
                           />
@@ -1726,7 +1734,7 @@ export default function App() {
                               <span>
                                 {scanningId === activeNoteModal.id
                                   ? (scanStatus[activeNoteModal.id] || 'Membaca dokumen...')
-                                  : '✨ AI Baca Teks'}
+                                  : 'AI Baca Teks'}
                               </span>
                             </button>
 
