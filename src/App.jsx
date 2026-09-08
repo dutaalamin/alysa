@@ -297,43 +297,52 @@ export default function App() {
     const filesList = e.target.files || e.dataTransfer?.files;
     if (!filesList || filesList.length === 0) return;
 
-    const file = filesList[0];
-    const isImg = file.type.startsWith('image/');
-    let imageArray = [];
+    for (let i = 0; i < filesList.length; i++) {
+      const file = filesList[i];
+      const isImg = file.type.startsWith('image/');
+      const ext = file.name.split('.').pop().toLowerCase();
+      
+      let fileTypeLabel = 'Document File';
+      if (['ppt', 'pptx'].includes(ext)) fileTypeLabel = 'PowerPoint Presentation';
+      else if (['xls', 'xlsx', 'csv'].includes(ext)) fileTypeLabel = 'Excel Spreadsheet';
+      else if (['txt', 'pdf', 'doc', 'docx'].includes(ext)) fileTypeLabel = `${ext.toUpperCase()} File`;
+      else if (isImg) fileTypeLabel = 'Photo / Image Note';
 
-    if (isImg) {
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const { data, error } = await supabase.storage.from('notes-images').upload(fileName, file);
-        if (!error && data) {
-          const { data: publicUrlData } = supabase.storage.from('notes-images').getPublicUrl(fileName);
-          if (publicUrlData?.publicUrl) {
-            imageArray = [publicUrlData.publicUrl];
+      let imageArray = [];
+
+      if (isImg) {
+        try {
+          const fileName = `${Date.now()}_${i}.${ext}`;
+          const { data, error } = await supabase.storage.from('notes-images').upload(fileName, file);
+          if (!error && data) {
+            const { data: publicUrlData } = supabase.storage.from('notes-images').getPublicUrl(fileName);
+            if (publicUrlData?.publicUrl) {
+              imageArray = [publicUrlData.publicUrl];
+            }
+          } else {
+            imageArray = [URL.createObjectURL(file)];
           }
-        } else {
+        } catch (err) {
           imageArray = [URL.createObjectURL(file)];
         }
-      } catch (err) {
-        imageArray = [URL.createObjectURL(file)];
       }
+
+      const newNote = {
+        id: (Date.now() + i).toString(),
+        title: file.name,
+        course: selectedFolder || 'General',
+        semester: 'Semester 3',
+        date: new Date().toISOString().split('T')[0],
+        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+        pinned: false,
+        content: `[${fileTypeLabel}] ${file.name}`,
+        images: imageArray,
+        ocr_extracted: false
+      };
+
+      await supabase.from('notes').insert([newNote]);
+      setNotes(prev => [newNote, ...prev]);
     }
-
-    const newNote = {
-      id: Date.now().toString(),
-      title: file.name,
-      course: selectedFolder || 'General',
-      semester: 'Semester 3',
-      date: new Date().toISOString().split('T')[0],
-      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-      pinned: false,
-      content: isImg ? 'Uploaded new lecture photo note.' : 'Course document file.',
-      images: imageArray,
-      ocr_extracted: false
-    };
-
-    await supabase.from('notes').insert([newNote]);
-    setNotes(prev => [newNote, ...prev]);
   };
 
   const handleSimulateAIScan = (noteId) => {
@@ -424,18 +433,18 @@ export default function App() {
 
                 <div className="space-y-2">
                   <button
-                    onClick={() => { setIsNoteModalOpen(true); setIsMobileMenuOpen(false); }}
+                    onClick={() => { fileInputRef.current?.click(); setIsMobileMenuOpen(false); }}
                     className="w-full bg-[#C89B68] text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2"
                   >
                     <Plus size={16} />
-                    <span>New Note</span>
+                    <span>Add Files</span>
                   </button>
                   <button
                     onClick={() => { setIsFolderModalOpen(true); setIsMobileMenuOpen(false); }}
                     className="w-full bg-[#FAF0E6] text-[#4A3E3C] border border-[#E8DAC8] font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2"
                   >
                     <FolderPlus size={15} className="text-[#C89B68]" />
-                    <span>Course Folder</span>
+                    <span>New Folder</span>
                   </button>
                 </div>
 
@@ -514,8 +523,16 @@ export default function App() {
             </div>
           </div>
 
-          {/* Action Button */}
+          {/* Action Buttons */}
           <div className="space-y-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full bg-[#C89B68] hover:bg-[#B88B58] text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+            >
+              <Plus size={16} />
+              <span>Add Files</span>
+            </button>
+
             <button
               onClick={() => setIsFolderModalOpen(true)}
               className="w-full bg-[#FAF0E6] hover:bg-[#F3E5D8] text-[#4A3E3C] border border-[#E8DAC8] font-bold text-xs py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -773,6 +790,8 @@ export default function App() {
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileUpload}
+                accept=".ppt,.pptx,.xls,.xlsx,.csv,.doc,.docx,.pdf,.txt,image/*"
+                multiple
                 className="hidden"
               />
               <div className="w-10 h-10 rounded-xl bg-[#F3E5D8] text-[#8C5E32] flex items-center justify-center">
