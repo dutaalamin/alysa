@@ -250,8 +250,24 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  const formatCleanNoteContent = (content) => {
+    if (!content) return '';
+    return content
+      .replace(/\n\n📥 DOWNLOAD_URL: .+/g, '')
+      .replace(/--- 📑 Extracted Document Text \([^)]+\) ---\n?/gi, '')
+      .replace(/--- 📑 Extracted Document Text ---\n?/gi, '')
+      .replace(/--- 📑 Hasil Ekstraksi Teks \([^)]+\) ---\n?/gi, '')
+      .replace(/--- 📑 Hasil Ekstraksi Teks Dokumen ---\n?/gi, '')
+      .replace(/--- 📑 Page \d+ \([^)]+\) ---\n?/gi, '')
+      .replace(/--- 📑 Page \d+ ---\n?/gi, '')
+      .replace(/--- 📄 Hasil Scan AI \([^)]+\) ---\n?/gi, '')
+      .replace(/--- 📄 Hasil Scan AI ---\n?/gi, '')
+      .replace(/^\[(PDF File|Photo \/ Image Note|Document File|PowerPoint Presentation|Excel Spreadsheet|DOCX File|TXT File)\] .+\n?/gi, '')
+      .trim();
+  };
+
   const handleDownloadTextAsFile = (title, content) => {
-    const cleanContent = (content || '').replace(/\n\n📥 DOWNLOAD_URL: .+/, '');
+    const cleanContent = formatCleanNoteContent(content);
     const blob = new Blob([cleanContent || title], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -562,7 +578,7 @@ export default function App() {
         try {
           const autoExtracted = await extractTextFromFile(file, file.name);
           if (autoExtracted && !autoExtracted.startsWith('(')) {
-            contentText += `\n\n--- 📑 Extracted Document Text (${fileTypeLabel}) ---\n` + autoExtracted;
+            contentText += `\n\n` + autoExtracted;
           }
         } catch (autoErr) {
           console.log('Auto document extraction notice:', autoErr);
@@ -608,7 +624,7 @@ export default function App() {
             setScanStatus(prev => ({ ...prev, [noteId]: msg }));
           });
           if (text) {
-            extractedCombined += (extractedCombined ? '\n\n' : '') + `--- 📄 Hasil Scan AI (Gambar ${i + 1}) ---\n` + text;
+            extractedCombined += (extractedCombined ? '\n\n' : '') + text;
           }
         }
       }
@@ -622,7 +638,7 @@ export default function App() {
           setScanStatus(prev => ({ ...prev, [noteId]: msg }));
         });
         if (text) {
-          extractedCombined += (extractedCombined ? '\n\n' : '') + `--- 📑 Hasil Ekstraksi Teks Dokumen ---\n` + text;
+          extractedCombined += (extractedCombined ? '\n\n' : '') + text;
         }
       } else if (!note.images || note.images.length === 0) {
         // If file has no URL or images (e.g. older upload), open file picker to extract
@@ -638,7 +654,7 @@ export default function App() {
                 setScanStatus(prev => ({ ...prev, [noteId]: msg }));
               });
               if (text) {
-                const updatedContent = `${note.content || ''}\n\n--- 📑 Hasil Ekstraksi Teks (${selectedFile.name}) ---\n${text}`;
+                const updatedContent = `${note.content || ''}\n\n${text}`;
                 await supabase.from('notes').update({ content: updatedContent, ocr_extracted: true }).eq('id', noteId);
                 setNotes(prev => prev.map(n => n.id === noteId ? { ...n, content: updatedContent } : n));
                 if (activeNoteModal && activeNoteModal.id === noteId) {
@@ -731,7 +747,7 @@ export default function App() {
         try {
           const extractedText = await extractTextFromFile(file, file.name);
           if (extractedText && !extractedText.startsWith('(')) {
-            updatedContent += `\n\n--- 📑 Hasil Ekstraksi Teks (${file.name}) ---\n` + extractedText;
+            updatedContent += `\n\n` + extractedText;
           }
         } catch (err) {
           console.log('Extract error:', err);
@@ -1433,7 +1449,7 @@ export default function App() {
 
                             {/* Text Preview (extended line-clamp and cleaner font) */}
                             <p className="text-xs text-[#8A7977] whitespace-pre-line leading-relaxed line-clamp-6 font-medium">
-                              {(note.content || '').replace(/\n\n📥 DOWNLOAD_URL: .+/, '')}
+                              {formatCleanNoteContent(note.content)}
                             </p>
                           </div>
 
@@ -1768,9 +1784,9 @@ export default function App() {
               })()}
 
               {/* Note Text Content */}
-              {activeNoteModal.content && (
+              {activeNoteModal.content && formatCleanNoteContent(activeNoteModal.content) && (
                 <div className="bg-[#FAF4EC] border border-[#E8DAC8] rounded-2xl p-5 text-sm text-[#4A3E3C] leading-relaxed font-medium whitespace-pre-wrap select-text">
-                  {activeNoteModal.content.replace(/\n\n📥 DOWNLOAD_URL: .+/, '')}
+                  {formatCleanNoteContent(activeNoteModal.content)}
                 </div>
               )}
             </div>

@@ -63,7 +63,7 @@ export async function extractTextFromFile(fileOrUrl, fileName = '', onProgress =
         const worksheet = workbook.Sheets[sheetName];
         const csvData = XLSX.utils.sheet_to_csv(worksheet);
         if (csvData.trim()) {
-          fullText += `--- 📊 Sheet: ${sheetName} ---\n${csvData.trim()}\n\n`;
+          fullText += (fullText ? '\n\n' : '') + csvData.trim();
         }
       });
       return fullText.trim() || '(Empty Excel spreadsheet)';
@@ -90,7 +90,7 @@ export async function extractTextFromFile(fileOrUrl, fileName = '', onProgress =
         const xmlContent = await zip.files[slideFiles[i]].async('text');
         const textMatches = [...xmlContent.matchAll(/<a:t[^>]*>(.*?)<\/a:t>/g)].map(m => m[1]);
         if (textMatches.length > 0) {
-          slidesText += `--- 🖼️ Slide ${i + 1} ---\n${textMatches.join(' ')}\n\n`;
+          slidesText += (slidesText ? '\n\n' : '') + textMatches.join(' ');
         }
       }
       return slidesText.trim() || '(Empty PowerPoint slides)';
@@ -113,7 +113,7 @@ export async function extractTextFromFile(fileOrUrl, fileName = '', onProgress =
         const pageText = textContent.items.map(item => item.str).join(' ').trim();
 
         if (pageText && pageText.length > 5) {
-          pdfText += `--- 📑 Page ${i} ---\n${pageText}\n\n`;
+          pdfText += (pdfText ? '\n\n' : '') + pageText;
         } else {
           // Fallback to OCR if page has no selectable text (scanned PDF image)
           onProgress(`OCR Scanning PDF page ${i}/${pdf.numPages}...`);
@@ -129,7 +129,7 @@ export async function extractTextFromFile(fileOrUrl, fileName = '', onProgress =
           const ocrResult = await Tesseract.recognize(dataUrl, 'eng+ind');
           const ocrText = ocrResult.data?.text?.trim();
           if (ocrText) {
-            pdfText += `--- 📑 Page ${i} (AI OCR Scan) ---\n${ocrText}\n\n`;
+            pdfText += (pdfText ? '\n\n' : '') + ocrText;
           }
         }
       }
