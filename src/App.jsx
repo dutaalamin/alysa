@@ -152,6 +152,40 @@ const SCHEDULE_DATA = {
 const INITIAL_NOTES = [];
 const INITIAL_FOLDERS = [];
 
+// Hostinger-Style Geometric Monogram Logo Component for STOODY
+function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle = false }) {
+  const iconSizes = size === 'lg' ? 'w-14 h-14 p-2.5 rounded-2xl' : size === 'sm' ? 'w-8 h-8 p-1.5 rounded-xl' : 'w-10 h-10 p-2 rounded-2xl';
+  const textSizes = size === 'lg' ? 'text-2xl tracking-[0.22em]' : size === 'sm' ? 'text-base tracking-[0.14em]' : 'text-xl tracking-[0.18em]';
+
+  return (
+    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2.5' : 'items-center gap-3'}`}>
+      <div className={`${iconSizes} bg-[#C89B68] text-white flex items-center justify-center shadow-md border border-white/40 transform hover:scale-105 transition-all`}>
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
+          <path 
+            d="M 22 18 H 80 L 66 34 H 40 V 42 L 80 52 V 82 H 20 L 34 66 H 60 V 58 L 20 48 Z" 
+            fill="currentColor" 
+          />
+        </svg>
+      </div>
+      <div className="flex flex-col">
+        <div className="flex items-center gap-1.5">
+          <span className={`font-black uppercase text-[#4A3E3C] font-['Plus_Jakarta_Sans',sans-serif] ${textSizes}`}>
+            STOODY
+          </span>
+          <span className="text-[10px] px-1.5 py-0.5 font-black rounded-md bg-[#F3E5D8] text-[#8C5E32] tracking-wider uppercase">
+            .ID
+          </span>
+        </div>
+        {showSubtitle && (
+          <p className="text-xs text-[#8A7977] font-semibold mt-1">
+            Ruang Catatan & Materi Kuliah Aesthetic
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [notes, setNotes] = useState(() => {
     try {
@@ -892,12 +926,7 @@ export default function App() {
       
       {/* MOBILE TOP HEADER BAR (Mobile screens only) */}
       <div className="flex md:hidden items-center justify-between p-4 bg-[#FAF4EC] border-b border-[#E8DAC8]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#C89B68] flex items-center justify-center text-white font-black text-sm shadow-sm">
-            S
-          </div>
-          <h1 className="text-lg font-extrabold text-[#4A3E3C] font-['Quicksand',sans-serif]">stoody</h1>
-        </div>
+        <StoodyHostingerLogo size="sm" />
 
         <div className="flex items-center gap-2">
           <button
@@ -1019,16 +1048,7 @@ export default function App() {
         <div className="space-y-6">
           
           {/* Logo Header */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#C89B68] flex items-center justify-center text-white font-black text-xl shadow-sm border border-white/40">
-              S
-            </div>
-            <div>
-              <h1 className="text-xl font-black tracking-tight text-[#4A3E3C] font-['Quicksand',sans-serif]">
-                stoody
-              </h1>
-            </div>
-          </div>
+          <StoodyHostingerLogo size="md" />
 
           {/* Action Buttons */}
           <div className="space-y-2">
@@ -2074,18 +2094,9 @@ export default function App() {
                 <X size={18} />
               </button>
 
-              {/* Brand Logo Header */}
-              <div className="flex flex-col items-center justify-center text-center space-y-2 mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-[#C89B68] text-white flex items-center justify-center font-black text-2xl shadow-md border-2 border-white/50">
-                  S
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-2xl font-black tracking-tight text-[#4A3E3C] font-['Quicksand',sans-serif]">stoody</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32] font-bold">id</span>
-                </div>
-                <p className="text-xs text-[#8A7977] font-semibold">
-                  Ruang Catatan & Materi Kuliah Aesthetic
-                </p>
+              {/* Brand Logo Header (Hostinger Style) */}
+              <div className="mb-6">
+                <StoodyHostingerLogo size="lg" layout="vertical" showSubtitle={true} />
               </div>
 
               {/* Tab Selector: Login vs Register */}
