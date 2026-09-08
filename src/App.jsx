@@ -152,26 +152,90 @@ const SCHEDULE_DATA = {
 const INITIAL_NOTES = [];
 const INITIAL_FOLDERS = [];
 
+const THEMES = {
+  pastel: {
+    id: 'pastel',
+    name: '🌸 Pastel Warm',
+    bgApp: 'bg-[#FFF9F2]',
+    bgSidebar: 'bg-[#FAF4EC]',
+    bgCard: 'bg-[#FAF4EC]',
+    bgCardSubtle: 'bg-[#FAF0E6]',
+    bgInput: 'bg-white',
+    border: 'border-[#E8DAC8]',
+    borderSubtle: 'border-[#E8DAC8]/70',
+    textMain: 'text-[#4A3E3C]',
+    textMuted: 'text-[#8A7977]',
+    textAccent: 'text-[#8C5E32]',
+    bgAccent: 'bg-[#C89B68]',
+    bgAccentHover: 'hover:bg-[#B88B58]',
+    bgActiveItem: 'bg-[#F3E5D8]',
+    badgeBg: 'bg-[#F3E5D8]',
+    badgeText: 'text-[#8C5E32]',
+    logoColor: 'text-[#4A3E3C]'
+  },
+  snoopy: {
+    id: 'snoopy',
+    name: '🐶 Snoopy Red',
+    bgApp: 'bg-[#FFF5F5]',
+    bgSidebar: 'bg-[#FFE6E6]',
+    bgCard: 'bg-[#FFFFFF]',
+    bgCardSubtle: 'bg-[#FFF0F0]',
+    bgInput: 'bg-white',
+    border: 'border-[#FED7D7]',
+    borderSubtle: 'border-[#FEB2B2]/60',
+    textMain: 'text-[#2D3748]',
+    textMuted: 'text-[#718096]',
+    textAccent: 'text-[#E53E3E]',
+    bgAccent: 'bg-[#E53E3E]',
+    bgAccentHover: 'hover:bg-[#C53030]',
+    bgActiveItem: 'bg-[#FED7D7]',
+    badgeBg: 'bg-[#FED7D7]',
+    badgeText: 'text-[#C53030]',
+    logoColor: 'text-[#E53E3E]'
+  },
+  dark: {
+    id: 'dark',
+    name: '🌙 Dark Midnight',
+    bgApp: 'bg-[#0F172A]',
+    bgSidebar: 'bg-[#1E293B]',
+    bgCard: 'bg-[#1E293B]',
+    bgCardSubtle: 'bg-[#334155]/60',
+    bgInput: 'bg-[#334155]',
+    border: 'border-[#334155]',
+    borderSubtle: 'border-[#475569]/60',
+    textMain: 'text-[#F8FAFC]',
+    textMuted: 'text-[#94A3B8]',
+    textAccent: 'text-[#818CF8]',
+    bgAccent: 'bg-[#6366F1]',
+    bgAccentHover: 'hover:bg-[#4F46E5]',
+    bgActiveItem: 'bg-[#334155]',
+    badgeBg: 'bg-[#334155]',
+    badgeText: 'text-[#818CF8]',
+    logoColor: 'text-[#F8FAFC]'
+  }
+};
+
 // Hostinger-Style Geometric Monogram Logo & Bold ALL-CAPS Typography
-function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle = false }) {
+function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle = false, textColor }) {
   const iconSizes = size === 'lg' ? 'w-10 h-10' : size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
   const textSizes = size === 'lg' ? 'text-2xl tracking-[0.16em]' : size === 'sm' ? 'text-base tracking-[0.12em]' : 'text-xl tracking-[0.14em]';
   const gapClass = size === 'lg' ? 'gap-2' : size === 'sm' ? 'gap-1' : 'gap-1.5';
+  const logoTextClass = textColor || 'text-[#4A3E3C]';
 
   return (
     <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2' : `items-center ${gapClass}`}`}>
-      <div className={`${iconSizes} text-[#4A3E3C] flex items-center justify-center flex-shrink-0 transform hover:scale-105 transition-all`}>
+      <div className={`${iconSizes} ${logoTextClass} flex items-center justify-center flex-shrink-0 transform hover:scale-105 transition-all`}>
         <svg viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
           <path d="M 20 18 H 80 L 64 34 H 40 V 43 L 80 54 L 64 66 L 20 48 Z" />
           <path d="M 80 82 H 20 L 36 66 H 60 V 57 L 20 46 L 36 34 L 80 52 Z" />
         </svg>
       </div>
       <div className="flex flex-col">
-        <span className={`font-black uppercase text-[#4A3E3C] font-['Plus_Jakarta_Sans',sans-serif] ${textSizes}`}>
+        <span className={`font-black uppercase ${logoTextClass} font-['Plus_Jakarta_Sans',sans-serif] ${textSizes}`}>
           STOODY
         </span>
         {showSubtitle && (
-          <p className="text-xs text-[#8A7977] font-semibold mt-0.5 tracking-normal">
+          <p className="text-xs opacity-75 font-semibold mt-0.5 tracking-normal">
             Smart Cloud Drive & AI Note Workspace
           </p>
         )}
@@ -255,6 +319,8 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('stoody_theme', currentTheme);
   }, [currentTheme]);
+
+  const t = THEMES[currentTheme] || THEMES.pastel;
 
   const fileInputRef = useRef(null);
 
@@ -1003,22 +1069,22 @@ export default function App() {
   const totalClassesCount = Object.values(SCHEDULE_DATA).flat().length;
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-screen bg-[#FFF9F2] text-[#4A3E3C] overflow-hidden font-sans">
+    <div className={`flex flex-col md:flex-row h-screen w-screen ${t.bgApp} ${t.textMain} overflow-hidden font-sans transition-colors duration-300`}>
       
       {/* MOBILE TOP HEADER BAR (Mobile screens only) */}
-      <div className="flex md:hidden items-center justify-between p-4 bg-[#FAF4EC] border-b border-[#E8DAC8]">
-        <StoodyHostingerLogo size="sm" />
+      <div className={`flex md:hidden items-center justify-between p-4 ${t.bgSidebar} border-b ${t.border} transition-colors duration-300`}>
+        <StoodyHostingerLogo size="sm" textColor={t.logoColor} />
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsAuthModalOpen(true)}
-            className="flex items-center gap-1.5 bg-white border border-[#E8DAC8] px-2.5 py-1 rounded-full text-xs font-extrabold text-[#4A3E3C] shadow-xs active:scale-95"
+            className={`flex items-center gap-1.5 ${t.bgInput} border ${t.border} px-3 py-1.5 rounded-full text-xs font-extrabold ${t.textMain} shadow-xs active:scale-95`}
           >
             <span>{currentUser?.user_metadata?.full_name ? '👤 ' + currentUser.user_metadata.full_name : '🔑 Login'}</span>
           </button>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl bg-white border border-[#E8DAC8] text-[#4A3E3C] shadow-sm"
+            className={`p-2 rounded-xl ${t.bgInput} border ${t.border} ${t.textMain} shadow-sm`}
           >
             {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -1032,18 +1098,13 @@ export default function App() {
             initial={{ opacity: 0, x: -280 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -280 }}
-            className="fixed inset-0 z-40 bg-[#4A3E3C]/30 backdrop-blur-sm md:hidden flex"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden flex"
           >
-            <div className="w-[280px] bg-[#FAF4EC] h-full p-5 flex flex-col justify-between border-r border-[#E8DAC8] shadow-xl">
+            <div className={`w-[280px] ${t.bgSidebar} h-full p-5 flex flex-col justify-between border-r ${t.border} shadow-xl`}>
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#C89B68] flex items-center justify-center text-white shadow-sm">
-                      <BookOpen size={16} className="fill-white/20" />
-                    </div>
-                    <h1 className="text-lg font-extrabold text-[#4A3E3C]">Stoody</h1>
-                  </div>
-                  <button onClick={() => setIsMobileMenuOpen(false)} className="text-[#8A7977]">
+                  <StoodyHostingerLogo size="sm" textColor={t.logoColor} />
+                  <button onClick={() => setIsMobileMenuOpen(false)} className={t.textMuted}>
                     <X size={18} />
                   </button>
                 </div>
@@ -1051,16 +1112,16 @@ export default function App() {
                 <div className="space-y-2">
                   <button
                     onClick={() => { fileInputRef.current?.click(); setIsMobileMenuOpen(false); }}
-                    className="w-full bg-[#C89B68] text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2"
+                    className={`w-full ${t.bgAccent} ${t.bgAccentHover} text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2`}
                   >
                     <Plus size={16} />
                     <span>Add Files</span>
                   </button>
                   <button
                     onClick={() => { setIsFolderModalOpen(true); setIsMobileMenuOpen(false); }}
-                    className="w-full bg-[#FAF0E6] text-[#4A3E3C] border border-[#E8DAC8] font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2"
+                    className={`w-full ${t.bgCardSubtle} ${t.textMain} border ${t.border} font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2`}
                   >
-                    <FolderPlus size={15} className="text-[#C89B68]" />
+                    <FolderPlus size={15} className={t.textAccent} />
                     <span>New Folder</span>
                   </button>
                 </div>
@@ -1087,12 +1148,12 @@ export default function App() {
                         }}
                         className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                           isActive 
-                            ? 'bg-[#F3E5D8] text-[#8C5E32] shadow-sm' 
-                            : 'text-[#8A7977] hover:bg-[#F7EFE5] hover:text-[#4A3E3C]'
+                            ? `${t.bgActiveItem} ${t.textAccent} shadow-sm` 
+                            : `${t.textMuted} hover:${t.bgCardSubtle} hover:${t.textMain}`
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <Icon size={16} className={isActive ? 'text-[#8C5E32]' : 'text-[#8A7977]'} />
+                          <Icon size={16} className={isActive ? t.textAccent : t.textMuted} />
                           <span>{item.label}</span>
                         </div>
                       </button>
@@ -1101,19 +1162,19 @@ export default function App() {
                 </nav>
               </div>
 
-              <div className="bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl p-4 space-y-2">
+              <div className={`${t.bgCardSubtle} border ${t.border} rounded-2xl p-4 space-y-2`}>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#8A7977] flex items-center gap-1.5">
-                    <BookOpen size={14} className="text-[#C89B68]" />
+                  <span className={`font-bold ${t.textMuted} flex items-center gap-1.5`}>
+                    <BookOpen size={14} className={t.textAccent} />
                     Note Storage
                   </span>
-                  <span className="font-bold text-[#8C5E32]">0% used</span>
+                  <span className={`font-bold ${t.textAccent}`}>0% used</span>
                 </div>
-                <div className="w-full h-1.5 bg-[#E8DAC8] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#C89B68] w-[2%] rounded-full"></div>
+                <div className={`w-full h-1.5 ${t.border} rounded-full overflow-hidden`}>
+                  <div className={`h-full ${t.bgAccent} w-[2%] rounded-full`}></div>
                 </div>
-                <p className="text-[10px] text-[#8A7977] font-medium flex items-center gap-1">
-                  <CheckCircle2 size={11} className="text-[#8C5E32]" />
+                <p className={`text-[10px] ${t.textMuted} font-medium flex items-center gap-1`}>
+                  <CheckCircle2 size={11} className={t.textAccent} />
                   Storage Connected
                 </p>
               </div>
@@ -1124,18 +1185,18 @@ export default function App() {
         )}
       </AnimatePresence>
       
-      {/* DESKTOP SIDEBAR (Cream Theme - hidden on mobile) */}
-      <aside className="hidden md:flex w-[280px] bg-[#FAF4EC]/90 border-r border-[#E8DAC8] p-5 flex-col justify-between shadow-sm backdrop-blur-md">
+      {/* DESKTOP SIDEBAR (Theme Aware - hidden on mobile) */}
+      <aside className={`hidden md:flex w-[280px] ${t.bgSidebar} border-r ${t.border} p-5 flex-col justify-between shadow-sm backdrop-blur-md transition-colors duration-300`}>
         <div className="space-y-6">
           
           {/* Logo Header */}
-          <StoodyHostingerLogo size="md" />
+          <StoodyHostingerLogo size="md" textColor={t.logoColor} />
 
           {/* Action Buttons */}
           <div className="space-y-2">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full bg-[#C89B68] hover:bg-[#B88B58] text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+              className={`w-full ${t.bgAccent} ${t.bgAccentHover} text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95`}
             >
               <Plus size={16} />
               <span>Add Files</span>
@@ -1143,9 +1204,9 @@ export default function App() {
 
             <button
               onClick={() => setIsFolderModalOpen(true)}
-              className="w-full bg-[#FAF0E6] hover:bg-[#F3E5D8] text-[#4A3E3C] border border-[#E8DAC8] font-bold text-xs py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
+              className={`w-full ${t.bgCardSubtle} ${t.textMain} border ${t.border} font-bold text-xs py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2`}
             >
-              <FolderPlus size={15} className="text-[#C89B68]" />
+              <FolderPlus size={15} className={t.textAccent} />
               <span>New Folder</span>
             </button>
           </div>
@@ -1172,12 +1233,12 @@ export default function App() {
                   }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     isActive 
-                      ? 'bg-[#F3E5D8] text-[#8C5E32] shadow-sm' 
-                      : 'text-[#8A7977] hover:bg-[#F7EFE5] hover:text-[#4A3E3C]'
+                      ? `${t.bgActiveItem} ${t.textAccent} shadow-sm` 
+                      : `${t.textMuted} hover:${t.bgCardSubtle} hover:${t.textMain}`
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon size={16} className={isActive ? 'text-[#8C5E32]' : 'text-[#8A7977]'} />
+                    <Icon size={16} className={isActive ? t.textAccent : t.textMuted} />
                     <span>{item.label}</span>
                   </div>
                 </button>
@@ -1187,53 +1248,53 @@ export default function App() {
         </div>
 
         {/* Bottom Storage Card Widget */}
-        <div className="bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl p-4 space-y-2.5">
+        <div className={`${t.bgCardSubtle} border ${t.border} rounded-2xl p-4 space-y-2.5`}>
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-[#8A7977] flex items-center gap-1.5">
-              <BookOpen size={14} className="text-[#C89B68]" />
+            <span className={`font-bold ${t.textMuted} flex items-center gap-1.5`}>
+              <BookOpen size={14} className={t.textAccent} />
               Note Storage
             </span>
-            <span className="font-bold text-[#8C5E32]">0% used</span>
+            <span className={`font-bold ${t.textAccent}`}>0% used</span>
           </div>
 
-          <div className="w-full h-1.5 bg-[#E8DAC8] rounded-full overflow-hidden">
-            <div className="h-full bg-[#C89B68] w-[2%] rounded-full"></div>
+          <div className={`w-full h-1.5 ${t.border} rounded-full overflow-hidden`}>
+            <div className={`h-full ${t.bgAccent} w-[2%] rounded-full`}></div>
           </div>
 
-          <p className="text-[10px] text-[#8A7977] font-medium flex items-center gap-1">
-            <CheckCircle2 size={11} className="text-[#8C5E32]" />
+          <p className={`text-[10px] ${t.textMuted} font-medium flex items-center gap-1`}>
+            <CheckCircle2 size={11} className={t.textAccent} />
             Storage Connected
           </p>
         </div>
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 p-6 overflow-y-auto flex flex-col gap-6">
+      <main className={`flex-1 p-6 overflow-y-auto flex flex-col gap-6 ${t.bgApp} transition-colors duration-300`}>
         
         {/* Top Header Bar */}
         <header className="flex items-center justify-between gap-4">
           
           {/* Search Bar */}
           <div className="relative w-full max-w-md">
-            <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8A7977]" />
+            <Search size={16} className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${t.textMuted}`} />
             <input
               type="text"
               placeholder="Search notes, courses..."
-              className="w-full bg-white border border-[#E8DAC8] rounded-2xl pl-10 pr-4 py-2.5 text-xs font-semibold text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 focus:border-[#C89B68] transition-all shadow-sm placeholder-[#8A7977]"
+              className={`w-full ${t.bgInput} border ${t.border} rounded-2xl pl-10 pr-4 py-2.5 text-xs font-semibold ${t.textMain} focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all shadow-sm placeholder:${t.textMuted}`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          {/* Header Controls & User Profile (Alysa) */}
+          {/* Header Controls & Modern Profile Widget */}
           <div className="flex items-center gap-3">
             
             {/* View Mode Toggle */}
-            <div className="flex bg-white border border-[#E8DAC8] rounded-xl p-1 shadow-sm">
+            <div className={`flex ${t.bgInput} border ${t.border} rounded-xl p-1 shadow-sm`}>
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
-                  viewMode === 'grid' ? 'bg-[#F3E5D8] text-[#8C5E32]' : 'text-[#8A7977] hover:text-[#4A3E3C]'
+                  viewMode === 'grid' ? `${t.bgActiveItem} ${t.textAccent}` : `${t.textMuted} hover:${t.textMain}`
                 }`}
               >
                 <Grid size={16} />
@@ -1241,61 +1302,63 @@ export default function App() {
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
-                  viewMode === 'list' ? 'bg-[#F3E5D8] text-[#8C5E32]' : 'text-[#8A7977] hover:text-[#4A3E3C]'
+                  viewMode === 'list' ? `${t.bgActiveItem} ${t.textAccent}` : `${t.textMuted} hover:${t.textMain}`
                 }`}
               >
                 <ListIcon size={16} />
               </button>
             </div>
 
-            {/* Cloud Sync Status Indicator */}
-            <div className="flex items-center gap-1.5 bg-[#FAF0E6] border border-[#E8DAC8] px-3 py-1.5 rounded-full text-[11px] font-bold text-[#8C5E32] shadow-sm">
-              <Cloud size={13} className={isSyncing ? "animate-pulse text-[#C89B68]" : "text-[#8C5E32]"} />
-              <span>{isSyncing ? 'Syncing...' : 'Cloud Synced'}</span>
-            </div>
-
             {/* Theme Selector Pill Badge */}
-            <div className="flex items-center gap-1.5 bg-white border border-[#E8DAC8] px-3 py-1.5 rounded-full text-xs font-extrabold shadow-sm">
+            <div className={`flex items-center gap-1.5 ${t.bgInput} border ${t.border} px-3 py-1.5 rounded-full text-xs font-extrabold shadow-sm`}>
               <span className="text-xs">
                 {currentTheme === 'snoopy' ? '🐶' : currentTheme === 'dark' ? '🌙' : '🌸'}
               </span>
               <select
                 value={currentTheme}
                 onChange={(e) => setCurrentTheme(e.target.value)}
-                className="bg-transparent border-0 text-xs font-extrabold text-[#4A3E3C] focus:outline-none cursor-pointer"
+                className={`bg-transparent border-0 text-xs font-extrabold ${t.textMain} focus:outline-none cursor-pointer`}
               >
-                <option value="pastel">🌸 Pastel Warm</option>
-                <option value="snoopy">🐶 Snoopy Red</option>
-                <option value="dark">🌙 Dark Midnight</option>
+                <option value="pastel" className="text-black bg-white">🌸 Pastel Warm</option>
+                <option value="snoopy" className="text-black bg-white">🐶 Snoopy Red</option>
+                <option value="dark" className="text-black bg-white">🌙 Dark Midnight</option>
               </select>
             </div>
 
-            {/* User Profile Badge (Desktop) */}
-            <div className="hidden md:flex items-center gap-2 bg-white border border-[#E8DAC8] px-3.5 py-1.5 rounded-full shadow-sm">
-              <div className="w-7 h-7 rounded-full bg-[#F3E5D8] text-[#8C5E32] flex items-center justify-center text-xs font-bold">
-                {currentUser?.user_metadata?.full_name ? currentUser.user_metadata.full_name[0].toUpperCase() : '👤'}
-              </div>
-              <span className="text-xs font-extrabold text-[#4A3E3C]">
-                {currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Mode Demo'}
-              </span>
-              {currentUser ? (
-                <button 
-                  onClick={handleSignOut} 
+            {/* Modern User Profile Badge (Desktop) */}
+            {currentUser ? (
+              <div className={`hidden md:flex items-center gap-2.5 ${t.bgInput} border ${t.border} px-3.5 py-1.5 rounded-2xl shadow-sm hover:shadow-md transition-all`}>
+                <div className="relative flex items-center justify-center">
+                  <div className={`w-7 h-7 rounded-full ${t.bgAccent} text-white flex items-center justify-center text-xs font-black shadow-xs`}>
+                    {currentUser.user_metadata?.full_name ? currentUser.user_metadata.full_name[0].toUpperCase() : '👤'}
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className={`text-xs font-extrabold ${t.textMain} leading-tight`}>
+                    {currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User Stoody'}
+                  </span>
+                  <span className={`text-[9px] font-bold ${t.textMuted}`}>
+                    {currentUser.id === 'demo-budi' ? '🧢 Workspace Budi' : currentUser.id === 'demo-alysa' ? '🌸 Workspace Alysa' : '✨ Stoody Member'}
+                  </span>
+                </div>
+                <button
+                  onClick={handleSignOut}
                   title="Keluar / Sign Out"
-                  className="text-xs font-bold text-[#A04040] hover:bg-[#FDF0F0] p-1.5 rounded-full ml-1 transition-all"
+                  className="text-xs font-bold text-red-500 hover:bg-red-50 p-1.5 rounded-full ml-1 transition-all"
                 >
                   <LogOut size={13} />
                 </button>
-              ) : (
-                <button 
-                  onClick={() => setIsAuthModalOpen(true)}
-                  className="text-[11px] font-bold text-white bg-[#C89B68] hover:bg-[#B88B58] px-2.5 py-1 rounded-lg ml-1 shadow-xs transition-all flex items-center gap-1 active:scale-95"
-                >
-                  <LogIn size={12} />
-                  <span>Masuk</span>
-                </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className={`hidden md:flex items-center gap-1.5 ${t.bgAccent} ${t.bgAccentHover} text-white font-extrabold text-xs px-3.5 py-1.5 rounded-2xl shadow-sm transition-all active:scale-95`}
+              >
+                <LogIn size={13} />
+                <span>Masuk / Daftar</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -1328,17 +1391,17 @@ export default function App() {
             {/* Header Title */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-extrabold text-[#4A3E3C]">
-                  Alysa's Class Schedule 📅
+                <h2 className={`text-base font-extrabold ${t.textMain}`}>
+                  {currentUser?.id === 'demo-budi' ? "Budi's Class Schedule 📅" : "Alysa's Class Schedule 📅"}
                 </h2>
-                <p className="text-xs text-[#8A7977]">
+                <p className={`text-xs ${t.textMuted}`}>
                   Weekly course timetable (Monday - Friday)
                 </p>
               </div>
             </div>
 
             {/* Days Selector Tabs */}
-            <div className="flex bg-white border border-[#E8DAC8] p-1.5 rounded-2xl gap-1.5 shadow-sm overflow-x-auto">
+            <div className={`flex ${t.bgCard} border ${t.border} p-1.5 rounded-2xl gap-1.5 shadow-sm overflow-x-auto`}>
               {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => {
                 const isSelected = selectedDay === day;
                 const classCount = SCHEDULE_DATA[day]?.length || 0;
@@ -1348,13 +1411,13 @@ export default function App() {
                     onClick={() => setSelectedDay(day)}
                     className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
                       isSelected 
-                        ? 'bg-[#C89B68] text-white shadow-sm' 
-                        : 'text-[#8A7977] hover:bg-[#FAF0E6] hover:text-[#4A3E3C]'
+                        ? `${t.bgAccent} text-white shadow-sm` 
+                        : `${t.textMuted} hover:${t.bgCardSubtle} hover:${t.textMain}`
                     }`}
                   >
                     <span>{day}</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-[#F3E5D8] text-[#8C5E32]'
+                      isSelected ? 'bg-white/20 text-white' : `${t.badgeBg} ${t.badgeText}`
                     }`}>
                       {classCount}
                     </span>
@@ -1369,36 +1432,36 @@ export default function App() {
                 SCHEDULE_DATA[selectedDay].map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white border border-[#E8DAC8] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    className={`${t.bgCard} border ${t.border} rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4`}
                   >
                     <div className="space-y-2 flex-1">
                       {/* Badge tags */}
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${t.badgeBg} ${t.badgeText}`}>
                           {item.code}
                         </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#E8DAC8] text-[#8A7977]">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${t.border} ${t.textMuted}`}>
                           {item.tag}
                         </span>
                       </div>
 
                       {/* Course Title */}
-                      <h3 className="text-sm font-extrabold text-[#4A3E3C]">
+                      <h3 className={`text-sm font-extrabold ${t.textMain}`}>
                         {item.title}
                       </h3>
 
                       {/* Session Info */}
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-[#8A7977] font-semibold pt-1">
+                      <div className={`flex flex-wrap items-center gap-4 text-xs ${t.textMuted} font-semibold pt-1`}>
                         <span className="flex items-center gap-1.5">
-                          <Info size={13} className="text-[#C89B68]" />
+                          <Info size={13} className={t.textAccent} />
                           {item.mode} • {item.session}
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <Clock size={13} className="text-[#C89B68]" />
+                          <Clock size={13} className={t.textAccent} />
                           {item.time}
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <MapPin size={13} className="text-[#C89B68]" />
+                          <MapPin size={13} className={t.textAccent} />
                           {item.location}
                         </span>
                       </div>
@@ -1406,12 +1469,12 @@ export default function App() {
                   </div>
                 ))
               ) : (
-                <div className="py-16 text-center bg-white border border-[#E8DAC8] rounded-2xl p-8 max-w-sm mx-auto shadow-sm">
-                  <div className="w-12 h-12 rounded-full bg-[#F3E5D8] text-[#8C5E32] mx-auto flex items-center justify-center text-xl mb-3">
+                <div className={`py-16 text-center ${t.bgCard} border ${t.border} rounded-2xl p-8 max-w-sm mx-auto shadow-sm`}>
+                  <div className={`w-12 h-12 rounded-full ${t.badgeBg} ${t.badgeText} mx-auto flex items-center justify-center text-xl mb-3`}>
                     ☕
                   </div>
-                  <h3 className="font-bold text-[#4A3E3C] text-sm mb-1">No Classes Scheduled</h3>
-                  <p className="text-xs text-[#8A7977]">Free day / self-study time for {selectedDay}.</p>
+                  <h3 className={`font-bold ${t.textMain} text-sm mb-1`}>No Classes Scheduled</h3>
+                  <p className={`text-xs ${t.textMuted}`}>Free day / self-study time for {selectedDay}.</p>
                 </div>
               )}
             </div>
@@ -1431,8 +1494,8 @@ export default function App() {
               }}
               className={`border-2 dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
                 isDragging 
-                  ? 'border-[#C89B68] bg-[#FAF0E6]' 
-                  : 'border-[#E8DAC8] bg-white/70 hover:border-[#C89B68] hover:bg-[#FAF4EC]'
+                  ? `${t.border} ${t.bgCardSubtle}` 
+                  : `${t.border} ${t.bgCard} hover:${t.bgCardSubtle}`
               }`}
             >
               <input
@@ -1443,13 +1506,13 @@ export default function App() {
                 multiple
                 className="hidden"
               />
-              <div className="w-10 h-10 rounded-xl bg-[#F3E5D8] text-[#8C5E32] flex items-center justify-center">
+              <div className={`w-10 h-10 rounded-xl ${t.badgeBg} ${t.badgeText} flex items-center justify-center`}>
                 <Upload size={20} />
               </div>
-              <p className="text-xs font-extrabold text-[#4A3E3C]">
+              <p className={`text-xs font-extrabold ${t.textMain}`}>
                 Drop files or documents here to upload
               </p>
-              <p className="text-[10px] text-[#8A7977]">
+              <p className={`text-[10px] ${t.textMuted}`}>
                 Upload note photos or course documents
               </p>
             </div>
@@ -1458,22 +1521,22 @@ export default function App() {
             <div className="space-y-4">
               {/* Breadcrumb Header when viewing inside a specific folder */}
               {selectedFolder && (
-                <div className="flex items-center justify-between bg-white border border-[#E8DAC8] rounded-2xl px-4 py-3 shadow-sm">
+                <div className={`flex items-center justify-between ${t.bgCard} border ${t.border} rounded-2xl px-4 py-3 shadow-sm`}>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setSelectedFolder(null)}
-                      className="text-xs font-extrabold text-[#8C5E32] hover:underline flex items-center gap-1 bg-[#FAF0E6] px-2.5 py-1 rounded-lg"
+                      className={`text-xs font-extrabold ${t.textAccent} hover:underline flex items-center gap-1 ${t.bgCardSubtle} px-2.5 py-1 rounded-lg`}
                     >
                       ← Home
                     </button>
-                    <span className="text-[#8A7977] font-bold text-xs">/</span>
-                    <div className="flex items-center gap-1.5 font-extrabold text-[#4A3E3C] text-sm">
-                      <Folder size={16} className="text-[#C89B68]" />
+                    <span className={`${t.textMuted} font-bold text-xs`}>/</span>
+                    <div className={`flex items-center gap-1.5 font-extrabold ${t.textMain} text-sm`}>
+                      <Folder size={16} className={t.textAccent} />
                       <span>{selectedFolder}</span>
                     </div>
                   </div>
 
-                  <span className="text-xs font-bold text-[#8A7977]">
+                  <span className={`text-xs font-bold ${t.textMuted}`}>
                     {filteredNotes.length} {filteredNotes.length === 1 ? 'File' : 'Files'}
                   </span>
                 </div>
@@ -1489,29 +1552,29 @@ export default function App() {
 
                 if (!hasItems) {
                   return (
-                    <div className="py-16 text-center bg-white border border-[#E8DAC8] rounded-2xl p-8 max-w-sm mx-auto shadow-sm">
-                      <div className="w-12 h-12 rounded-full bg-[#F3E5D8] text-[#8C5E32] mx-auto flex items-center justify-center text-xl mb-3">
+                    <div className={`py-16 text-center ${t.bgCard} border ${t.border} rounded-2xl p-8 max-w-sm mx-auto shadow-sm`}>
+                      <div className={`w-12 h-12 rounded-full ${t.badgeBg} ${t.badgeText} mx-auto flex items-center justify-center text-xl mb-3`}>
                         📂
                       </div>
-                      <h3 className="font-bold text-[#4A3E3C] text-sm mb-1">
+                      <h3 className={`font-bold ${t.textMain} text-sm mb-1`}>
                         {selectedFolder ? `Folder "${selectedFolder}" is empty` : 'No files or folders found'}
                       </h3>
-                      <p className="text-xs text-[#8A7977] mb-4">
+                      <p className={`text-xs ${t.textMuted} mb-4`}>
                         Upload files above or click below to create a note or folder.
                       </p>
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => setIsNoteModalOpen(true)}
-                          className="bg-[#C89B68] hover:bg-[#B88B58] text-white font-bold text-xs px-4 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                          className={`${t.bgAccent} ${t.bgAccentHover} text-white font-bold text-xs px-4 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5`}
                         >
                           <Plus size={14} />
                           <span>New Note</span>
                         </button>
                         <button
                           onClick={() => setIsFolderModalOpen(true)}
-                          className="bg-[#FAF0E6] hover:bg-[#F3E5D8] text-[#4A3E3C] border border-[#E8DAC8] font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5"
+                          className={`${t.bgCardSubtle} ${t.textMain} border ${t.border} font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5`}
                         >
-                          <FolderPlus size={14} className="text-[#C89B68]" />
+                          <FolderPlus size={14} className={t.textAccent} />
                           <span>New Folder</span>
                         </button>
                       </div>
@@ -1533,19 +1596,19 @@ export default function App() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.96 }}
                             onClick={() => setSelectedFolder(f.name)}
-                            className="bg-white border border-[#E8DAC8] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col justify-between group cursor-pointer"
+                            className={`${t.bgCard} border ${t.border} rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer`}
                           >
                             <div>
                               {/* Big Folder Icon Banner */}
-                              <div className="h-28 rounded-xl bg-[#FAF0E6] flex items-center justify-center mb-3 group-hover:bg-[#F3E5D8] transition-colors relative">
-                                <Folder size={44} className="fill-[#C89B68]/30 text-[#C89B68] group-hover:scale-105 transition-transform duration-200" />
+                              <div className={`h-28 rounded-xl ${t.bgCardSubtle} flex items-center justify-center mb-3 transition-colors relative`}>
+                                <Folder size={44} className={`fill-current opacity-40 ${t.textAccent} group-hover:scale-105 transition-transform duration-200`} />
 
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeleteFolder(f.id);
                                   }}
-                                  className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-white rounded-lg text-[#8A7977] hover:text-[#A04040] opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                  className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-white rounded-lg text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                                   title="Delete folder"
                                 >
                                   <Trash2 size={13} />
@@ -1553,10 +1616,10 @@ export default function App() {
                               </div>
 
                               {/* Folder Title */}
-                              <h3 className="font-extrabold text-[#4A3E3C] text-sm mb-1 truncate group-hover:text-[#8C5E32] transition-colors">
+                              <h3 className={`font-extrabold ${t.textMain} text-sm mb-1 truncate group-hover:${t.textAccent} transition-colors`}>
                                 {f.name}
                               </h3>
-                              <p className="text-[10px] font-semibold text-[#8A7977]">
+                              <p className={`text-[10px] font-semibold ${t.textMuted}`}>
                                 {folderNoteCount} {folderNoteCount === 1 ? 'file' : 'files'}
                               </p>
                             </div>
@@ -1576,13 +1639,13 @@ export default function App() {
                             setActiveNoteModal(note);
                             setIsEditingText(false);
                           }}
-                          className="bg-white border border-[#E8DAC8] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col justify-between group cursor-pointer"
+                          className={`${t.bgCard} border ${t.border} rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer`}
                         >
                           <div>
                             {/* Header Card */}
                             <div className="flex items-center justify-between mb-2">
                               {note.course ? (
-                                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
+                                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${t.badgeBg} ${t.badgeText}`}>
                                   {note.course}
                                 </span>
                               ) : <span />}
@@ -1592,7 +1655,7 @@ export default function App() {
                                   e.stopPropagation();
                                   handleDeleteNote(note.id);
                                 }}
-                                className="p-1 text-[#8A7977] hover:text-[#A04040] rounded-full transition-colors"
+                                className={`p-1 ${t.textMuted} hover:text-red-500 rounded-full transition-colors`}
                                 title="Delete note"
                               >
                                 <Trash2 size={13} />
@@ -1600,7 +1663,7 @@ export default function App() {
                             </div>
 
                             {/* Title */}
-                            <h3 className="font-extrabold text-[#4A3E3C] text-sm mb-2 line-clamp-2 group-hover:text-[#8C5E32] transition-colors">
+                            <h3 className={`font-extrabold ${t.textMain} text-sm mb-2 line-clamp-2 group-hover:${t.textAccent} transition-colors`}>
                               {note.title}
                             </h3>
 
@@ -1613,14 +1676,14 @@ export default function App() {
 
                               if (downloadUrl) {
                                 return (
-                                  <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl space-y-2">
+                                  <div className={`mb-3 p-3 ${t.bgCardSubtle} border ${t.border} rounded-xl space-y-2`}>
                                     <div className="flex items-center gap-2">
-                                      <div className="w-8 h-8 rounded-lg bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
+                                      <div className={`w-8 h-8 rounded-lg ${t.bgAccent} text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase`}>
                                         {fileExt || 'FILE'}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-extrabold text-[#4A3E3C] truncate">{note.title}</p>
-                                        <p className="text-[10px] text-[#8A7977] font-semibold">{note.size}</p>
+                                        <p className={`text-xs font-extrabold ${t.textMain} truncate`}>{note.title}</p>
+                                        <p className={`text-[10px] ${t.textMuted} font-semibold`}>{note.size}</p>
                                       </div>
                                     </div>
 
@@ -1629,7 +1692,7 @@ export default function App() {
                                         href={downloadUrl}
                                         download={note.title}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="flex-1 bg-[#C89B68] hover:bg-[#B88B58] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                                        className={`flex-1 ${t.bgAccent} ${t.bgAccentHover} text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95`}
                                       >
                                         <Download size={13} />
                                         <span>Download</span>
@@ -1640,7 +1703,7 @@ export default function App() {
                                           e.stopPropagation();
                                           handleOpenDocument(downloadUrl, note.title);
                                         }}
-                                        className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                        className={`bg-white hover:bg-gray-50 border ${t.border} ${t.textAccent} text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer`}
                                       >
                                         <ExternalLink size={13} />
                                         <span>Open</span>
@@ -1650,14 +1713,14 @@ export default function App() {
                                 );
                               } else if (isDocument && !note.images?.length) {
                                 return (
-                                  <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl">
+                                  <div className={`mb-3 p-3 ${t.bgCardSubtle} border ${t.border} rounded-xl`}>
                                     <div className="flex items-center gap-2">
-                                      <div className="w-8 h-8 rounded-lg bg-[#C89B68]/70 text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
+                                      <div className={`w-8 h-8 rounded-lg ${t.bgAccent} opacity-80 text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase`}>
                                         {fileExt}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold text-[#4A3E3C] truncate">{note.title}</p>
-                                        <p className="text-[10px] text-[#8A7977]">Click card to view details</p>
+                                        <p className={`text-xs font-bold ${t.textMain} truncate`}>{note.title}</p>
+                                        <p className={`text-[10px] ${t.textMuted}`}>Click card to view details</p>
                                       </div>
                                     </div>
                                   </div>
@@ -1676,14 +1739,14 @@ export default function App() {
                                       e.stopPropagation();
                                       setPreviewImage(img);
                                     }}
-                                    className="relative h-36 rounded-xl overflow-hidden cursor-pointer border border-[#E8DAC8] group/img"
+                                    className={`relative h-36 rounded-xl overflow-hidden cursor-pointer border ${t.border} group/img`}
                                   >
                                     <img
                                       src={img}
                                       alt="Note Photo"
                                       loading="eager"
                                       decoding="async"
-                                      className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 bg-[#F7EFE5]"
+                                      className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 bg-gray-100"
                                     />
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-between p-2 text-white">
                                       <span className="flex items-center gap-1 text-xs font-bold bg-black/40 px-2 py-1 rounded-lg backdrop-blur-xs">
@@ -1695,7 +1758,7 @@ export default function App() {
                                           e.stopPropagation();
                                           handleDownloadFile(img, `${note.title || 'image'}.jpg`);
                                         }}
-                                        className="bg-[#C89B68] hover:bg-[#B88B58] text-white p-1.5 rounded-lg shadow-md flex items-center gap-1 text-[10px] font-bold active:scale-95"
+                                        className={`${t.bgAccent} text-white p-1.5 rounded-lg shadow-md flex items-center gap-1 text-[10px] font-bold active:scale-95`}
                                         title="Download Image"
                                       >
                                         <Download size={13} />
@@ -1708,14 +1771,14 @@ export default function App() {
                             )}
 
                             {/* Text Preview (extended line-clamp and cleaner font) */}
-                            <p className="text-xs text-[#8A7977] whitespace-pre-line leading-relaxed line-clamp-6 font-medium">
+                            <p className={`text-xs ${t.textMuted} whitespace-pre-line leading-relaxed line-clamp-6 font-medium`}>
                               {formatCleanNoteContent(note.content)}
                             </p>
                           </div>
 
                           {/* Footer Card */}
-                          <div className="mt-4 pt-3 border-t border-[#F3E5D8] flex items-center justify-between">
-                            <span className="text-[10px] text-[#8A7977] font-semibold flex items-center gap-1">
+                          <div className={`mt-4 pt-3 border-t ${t.border} flex items-center justify-between`}>
+                            <span className={`text-[10px] ${t.textMuted} font-semibold flex items-center gap-1`}>
                               <Clock size={12} />
                               {note.date} • {note.size}
                             </span>
@@ -1726,7 +1789,7 @@ export default function App() {
                                   e.stopPropagation();
                                   handleDownloadTextAsFile(note.title, note.content);
                                 }}
-                                className="text-[10px] font-bold text-[#8C5E32] bg-[#FAF0E6] hover:bg-[#F3E5D8] border border-[#E8DAC8] px-2 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                                className={`text-[10px] font-bold ${t.textAccent} ${t.bgCardSubtle} border ${t.border} px-2 py-0.5 rounded-full flex items-center gap-1 transition-colors`}
                                 title="Download note as .txt file"
                               >
                                 <Download size={11} />
