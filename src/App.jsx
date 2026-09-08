@@ -152,32 +152,30 @@ const SCHEDULE_DATA = {
 const INITIAL_NOTES = [];
 const INITIAL_FOLDERS = [];
 
-// Hostinger-Style Geometric Monogram Logo Component for STOODY
+// Clean Aesthetic Logo Component (Transparent S Curve + clean stoody text)
 function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle = false }) {
-  const iconSizes = size === 'lg' ? 'w-14 h-14 p-2.5 rounded-2xl' : size === 'sm' ? 'w-8 h-8 p-1.5 rounded-xl' : 'w-10 h-10 p-2 rounded-2xl';
-  const textSizes = size === 'lg' ? 'text-2xl tracking-[0.22em]' : size === 'sm' ? 'text-base tracking-[0.14em]' : 'text-xl tracking-[0.18em]';
+  const iconSizes = size === 'lg' ? 'w-10 h-10' : size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
+  const textSizes = size === 'lg' ? 'text-2xl font-black' : size === 'sm' ? 'text-base font-extrabold' : 'text-xl font-extrabold';
 
   return (
-    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2.5' : 'items-center gap-3'}`}>
-      <div className={`${iconSizes} bg-[#C89B68] text-white flex items-center justify-center shadow-md border border-white/40 transform hover:scale-105 transition-all`}>
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
+    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2' : 'items-center gap-2.5'}`}>
+      <div className={`${iconSizes} text-[#C89B68] flex items-center justify-center flex-shrink-0`}>
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
           <path 
-            d="M 22 18 H 80 L 66 34 H 40 V 42 L 80 52 V 82 H 20 L 34 66 H 60 V 58 L 20 48 Z" 
-            fill="currentColor" 
+            d="M 78 26 C 78 12, 22 12, 22 36 C 22 60, 78 40, 78 64 C 78 88, 22 88, 22 74" 
+            stroke="currentColor" 
+            strokeWidth="16" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
           />
         </svg>
       </div>
       <div className="flex flex-col">
-        <div className="flex items-center gap-1.5">
-          <span className={`font-black uppercase text-[#4A3E3C] font-['Plus_Jakarta_Sans',sans-serif] ${textSizes}`}>
-            STOODY
-          </span>
-          <span className="text-[10px] px-1.5 py-0.5 font-black rounded-md bg-[#F3E5D8] text-[#8C5E32] tracking-wider uppercase">
-            .ID
-          </span>
-        </div>
+        <span className={`text-[#4A3E3C] tracking-tight font-['Quicksand',sans-serif] ${textSizes}`}>
+          stoody
+        </span>
         {showSubtitle && (
-          <p className="text-xs text-[#8A7977] font-semibold mt-1">
+          <p className="text-xs text-[#8A7977] font-semibold mt-0.5">
             Ruang Catatan & Materi Kuliah Aesthetic
           </p>
         )}
