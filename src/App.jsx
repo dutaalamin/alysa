@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './supabaseClient';
+import Tesseract from 'tesseract.js';
 
 // Class Schedule Data transcribed from Alysa's screenshots
 const SCHEDULE_DATA = {
@@ -185,6 +186,7 @@ export default function App() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [scanningId, setScanningId] = useState(null);
+  const [scanStatus, setScanStatus] = useState({});
   const [isDragging, setIsDragging] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -540,21 +542,76 @@ export default function App() {
     }
   };
 
-  const handleSimulateAIScan = (noteId) => {
+  const handleRealAIScan = async (note) => {
+    if (!note || !note.images || note.images.length === 0) return;
+    const noteId = note.id;
     setScanningId(noteId);
-    setTimeout(() => {
-      setNotes(notes.map(n => {
-        if (n.id === noteId) {
-          return {
-            ...n,
-            ocrExtracted: true,
-            content: n.content + '\n\n[AI Scan Result]:\n- Course material summary.'
-          };
+    setScanStatus(prev => ({ ...prev, [noteId]: 'Menyiapkan OCR engine...' }));
+
+    try {
+      let extractedCombined = '';
+      for (let i = 0; i < note.images.length; i++) {
+        const imgUrl = note.images[i];
+        setScanStatus(prev => ({ ...prev, [noteId]: `Membaca gambar ${i + 1}/${note.images.length}...` }));
+
+        const result = await Tesseract.recognize(imgUrl, 'eng+ind', {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              const pct = Math.round((m.progress || 0) * 100);
+              setScanStatus(prev => ({ ...prev, [noteId]: `Scan (${pct}%)...` }));
+            }
+          }
+        });
+
+        const text = result.data?.text?.trim();
+        if (text) {
+          extractedCombined += (extractedCombined ? '\n\n' : '') + `--- 📄 Hasil Scan AI (Gambar ${i + 1}) ---\n` + text;
         }
-        return n;
-      }));
+      }
+
+      if (!extractedCombined) {
+        extractedCombined = '--- 📄 Hasil Scan AI ---\n(Tidak ada teks yang dapat terdeteksi pada gambar)';
+      }
+
+      const existingContent = note.content || '';
+      const updatedContent = existingContent
+        ? `${existingContent}\n\n${extractedCombined}`
+        : extractedCombined;
+
+      // Update Supabase Database
+      try {
+        await supabase
+          .from('notes')
+          .update({ content: updatedContent, ocr_extracted: true })
+          .eq('id', noteId);
+      } catch (dbErr) {
+        console.log('Supabase OCR update notice:', dbErr);
+      }
+
+      // Update Local React State
+      setNotes(prev =>
+        prev.map(n =>
+          n.id === noteId
+            ? { ...n, content: updatedContent, ocrExtracted: true, ocr_extracted: true }
+            : n
+        )
+      );
+
+      if (activeNoteModal && activeNoteModal.id === noteId) {
+        setActiveNoteModal(prev => ({
+          ...prev,
+          content: updatedContent,
+          ocrExtracted: true,
+          ocr_extracted: true
+        }));
+      }
+    } catch (err) {
+      console.error('Tesseract OCR error:', err);
+      alert('Gagal melakukan scan teks dari gambar: ' + (err.message || err));
+    } finally {
       setScanningId(null);
-    }, 1200);
+      setScanStatus(prev => ({ ...prev, [noteId]: null }));
+    }
   };
 
   const totalClassesCount = Object.values(SCHEDULE_DATA).flat().length;
@@ -1268,13 +1325,13 @@ export default function App() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleSimulateAIScan(note.id);
+                                    handleRealAIScan(note);
                                   }}
                                   disabled={scanningId === note.id}
-                                  className="text-[10px] font-bold text-[#8C5E32] bg-[#F3E5D8] hover:bg-[#E8D4C1] px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                                  className="text-[10px] font-bold text-[#8C5E32] bg-[#F3E5D8] hover:bg-[#E8D4C1] px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors disabled:opacity-50"
                                 >
                                   <Sparkles size={11} className={scanningId === note.id ? 'animate-spin' : ''} />
-                                  <span>{scanningId === note.id ? 'Scanning...' : 'AI Scan'}</span>
+                                  <span>{scanningId === note.id ? (scanStatus[note.id] || 'Scanning...') : 'AI Scan'}</span>
                                 </button>
                               )}
                             </div>
@@ -1448,6 +1505,21 @@ export default function App() {
               {/* Attached Images */}
               {activeNoteModal.images && activeNoteModal.images.length > 0 && (
                 <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#8A7977]">Attached Photos ({activeNoteModal.images.length})</span>
+                    <button
+                      onClick={() => handleRealAIScan(activeNoteModal)}
+                      disabled={scanningId === activeNoteModal.id}
+                      className="bg-[#F3E5D8] hover:bg-[#E8D4C1] text-[#8C5E32] text-xs font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
+                      <span>
+                        {scanningId === activeNoteModal.id
+                          ? (scanStatus[activeNoteModal.id] || 'Scanning...')
+                          : 'Extract Text with AI (Free)'}
+                      </span>
+                    </button>
+                  </div>
                   {activeNoteModal.images.map((img, idx) => (
                     <div key={idx} className="relative rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5]">
                       <img
