@@ -152,30 +152,25 @@ const SCHEDULE_DATA = {
 const INITIAL_NOTES = [];
 const INITIAL_FOLDERS = [];
 
-// Concept 1: Modern Sleek Minimalist Logo Component for stoody
+// Hostinger-Style Geometric Monogram Logo & Bold ALL-CAPS Typography
 function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle = false }) {
-  const iconContainerClass = size === 'lg' ? 'w-12 h-12 rounded-2xl shadow-md p-2' : size === 'sm' ? 'w-7 h-7 rounded-xl shadow-xs p-1.5' : 'w-9 h-9 rounded-2xl shadow-sm p-1.5';
-  const textSizes = size === 'lg' ? 'text-2xl font-extrabold' : size === 'sm' ? 'text-base font-extrabold' : 'text-xl font-extrabold';
+  const iconSizes = size === 'lg' ? 'w-10 h-10' : size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
+  const textSizes = size === 'lg' ? 'text-2xl tracking-[0.18em]' : size === 'sm' ? 'text-base tracking-[0.14em]' : 'text-xl tracking-[0.16em]';
 
   return (
-    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2.5' : 'items-center gap-2.5'}`}>
-      <div className={`${iconContainerClass} bg-gradient-to-br from-[#D4A876] to-[#B88652] text-white flex items-center justify-center flex-shrink-0 border border-white/40 transform hover:scale-105 transition-all`}>
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
-          <path 
-            d="M 68 28 C 68 18, 32 18, 32 38 C 32 58, 68 46, 68 64 C 68 82, 32 82, 32 72" 
-            stroke="currentColor" 
-            strokeWidth="14" 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-          />
+    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2.5' : 'items-center gap-3'}`}>
+      <div className={`${iconSizes} text-[#C89B68] flex items-center justify-center flex-shrink-0 transform hover:scale-105 transition-all`}>
+        <svg viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <path d="M 20 18 H 80 L 64 34 H 40 V 43 L 80 54 L 64 66 L 20 48 Z" />
+          <path d="M 80 82 H 20 L 36 66 H 60 V 57 L 20 46 L 36 34 L 80 52 Z" />
         </svg>
       </div>
       <div className="flex flex-col">
-        <span className={`text-[#4A3E3C] tracking-tight font-['Plus_Jakarta_Sans',sans-serif] ${textSizes}`}>
-          stoody
+        <span className={`font-black uppercase text-[#4A3E3C] font-['Plus_Jakarta_Sans',sans-serif] ${textSizes}`}>
+          STOODY
         </span>
         {showSubtitle && (
-          <p className="text-xs text-[#8A7977] font-semibold mt-0.5">
+          <p className="text-xs text-[#8A7977] font-semibold mt-0.5 tracking-normal">
             Ruang Catatan & Materi Kuliah Aesthetic
           </p>
         )}
