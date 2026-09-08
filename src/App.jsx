@@ -156,7 +156,7 @@ const INITIAL_FOLDERS = [];
 function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle = false }) {
   const iconSizes = size === 'lg' ? 'w-10 h-10' : size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
   const textSizes = size === 'lg' ? 'text-2xl tracking-[0.16em]' : size === 'sm' ? 'text-base tracking-[0.12em]' : 'text-xl tracking-[0.14em]';
-  const gapClass = size === 'lg' ? 'gap-2.5' : size === 'sm' ? 'gap-1.5' : 'gap-2';
+  const gapClass = size === 'lg' ? 'gap-2' : size === 'sm' ? 'gap-1' : 'gap-1.5';
 
   return (
     <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2' : `items-center ${gapClass}`}`}>
