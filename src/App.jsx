@@ -26,7 +26,11 @@ import {
   Building2,
   Info,
   Menu,
-  SquarePen
+  SquarePen,
+  LogOut,
+  LogIn,
+  Lock,
+  Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './supabaseClient';
@@ -204,6 +208,17 @@ export default function App() {
   const [isEditingText, setIsEditingText] = useState(false);
   const [editTextContent, setEditTextContent] = useState('');
 
+  // Auth & User States
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
+
   const fileInputRef = useRef(null);
 
   const getBlobUrlIfNeeded = (url) => {
@@ -309,6 +324,78 @@ export default function App() {
     setNotes(prev => prev.map(n => n.id === noteId ? { ...n, content: newFullContent } : n));
     setActiveNoteModal(prev => ({ ...prev, content: newFullContent }));
     setIsEditingText(false);
+  };
+
+  // Listen to Supabase Auth State
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user || null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+    setAuthLoading(true);
+
+    try {
+      if (authMode === 'login') {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword
+        });
+        if (error) throw error;
+        setCurrentUser(data.user);
+        setIsAuthModalOpen(false);
+        setAuthEmail('');
+        setAuthPassword('');
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+          options: {
+            data: { full_name: authName }
+          }
+        });
+        if (error) throw error;
+        if (data.user) {
+          setCurrentUser(data.user);
+          setAuthSuccess('Pendaftaran berhasil! Akun Anda siap digunakan.');
+          setTimeout(() => {
+            setIsAuthModalOpen(false);
+            setAuthSuccess('');
+          }, 1200);
+        }
+      }
+    } catch (err) {
+      setAuthError(err.message || 'Terjadi kesalahan saat otentikasi');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleDemoAccountSwitch = (name, email) => {
+    const demoUser = {
+      id: `demo-${name.toLowerCase()}`,
+      email: email,
+      user_metadata: { full_name: name }
+    };
+    setCurrentUser(demoUser);
+    setIsAuthModalOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {}
+    setCurrentUser(null);
   };
 
   const [isCloudConnected, setIsCloudConnected] = useState(true);
@@ -806,17 +893,19 @@ export default function App() {
       {/* MOBILE TOP HEADER BAR (Mobile screens only) */}
       <div className="flex md:hidden items-center justify-between p-4 bg-[#FAF4EC] border-b border-[#E8DAC8]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#C89B68] flex items-center justify-center text-white shadow-sm">
-            <BookOpen size={16} className="fill-white/20" />
+          <div className="w-8 h-8 rounded-xl bg-[#C89B68] flex items-center justify-center text-white font-black text-sm shadow-sm">
+            S
           </div>
-          <h1 className="text-lg font-extrabold text-[#4A3E3C]">Stoody</h1>
+          <h1 className="text-lg font-extrabold text-[#4A3E3C] font-['Quicksand',sans-serif]">stoody</h1>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-white border border-[#E8DAC8] px-2.5 py-1 rounded-full text-xs font-extrabold">
-            <span>🌸</span>
-            <span>Alysa</span>
-          </div>
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="flex items-center gap-1.5 bg-white border border-[#E8DAC8] px-2.5 py-1 rounded-full text-xs font-extrabold text-[#4A3E3C] shadow-xs active:scale-95"
+          >
+            <span>{currentUser?.user_metadata?.full_name ? '👤 ' + currentUser.user_metadata.full_name : '🔑 Login'}</span>
+          </button>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-xl bg-white border border-[#E8DAC8] text-[#4A3E3C] shadow-sm"
@@ -931,12 +1020,12 @@ export default function App() {
           
           {/* Logo Header */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#C89B68] flex items-center justify-center text-white shadow-sm">
-              <BookOpen size={20} className="fill-white/20" />
+            <div className="w-10 h-10 rounded-2xl bg-[#C89B68] flex items-center justify-center text-white font-black text-xl shadow-sm border border-white/40">
+              S
             </div>
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-[#4A3E3C] font-display">
-                Stoody
+              <h1 className="text-xl font-black tracking-tight text-[#4A3E3C] font-['Quicksand',sans-serif]">
+                stoody
               </h1>
             </div>
           </div>
@@ -1064,12 +1153,31 @@ export default function App() {
               <span>{isSyncing ? 'Syncing...' : 'Cloud Synced'}</span>
             </div>
 
-            {/* User Profile Badge (Alysa - Desktop only) */}
+            {/* User Profile Badge (Desktop) */}
             <div className="hidden md:flex items-center gap-2 bg-white border border-[#E8DAC8] px-3.5 py-1.5 rounded-full shadow-sm">
               <div className="w-7 h-7 rounded-full bg-[#F3E5D8] text-[#8C5E32] flex items-center justify-center text-xs font-bold">
-                🌸
+                {currentUser?.user_metadata?.full_name ? currentUser.user_metadata.full_name[0].toUpperCase() : '👤'}
               </div>
-              <span className="text-xs font-extrabold text-[#4A3E3C]">Alysa</span>
+              <span className="text-xs font-extrabold text-[#4A3E3C]">
+                {currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Mode Demo'}
+              </span>
+              {currentUser ? (
+                <button 
+                  onClick={handleSignOut} 
+                  title="Keluar / Sign Out"
+                  className="text-xs font-bold text-[#A04040] hover:bg-[#FDF0F0] p-1.5 rounded-full ml-1 transition-all"
+                >
+                  <LogOut size={13} />
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="text-[11px] font-bold text-white bg-[#C89B68] hover:bg-[#B88B58] px-2.5 py-1 rounded-lg ml-1 shadow-xs transition-all flex items-center gap-1 active:scale-95"
+                >
+                  <LogIn size={12} />
+                  <span>Masuk</span>
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -1948,6 +2056,148 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* AUTH MODAL (LOGIN & REGISTER) */}
+      <AnimatePresence>
+        {isAuthModalOpen && (
+          <div className="fixed inset-0 z-50 bg-[#4A3E3C]/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#FAF4EC] border border-[#E8DAC8] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+            >
+              <button
+                onClick={() => setIsAuthModalOpen(false)}
+                className="absolute top-4 right-4 p-2 text-[#8A7977] hover:text-[#4A3E3C] rounded-full hover:bg-[#E8DAC8]/50 transition-all"
+              >
+                <X size={18} />
+              </button>
+
+              {/* Brand Logo Header */}
+              <div className="flex flex-col items-center justify-center text-center space-y-2 mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-[#C89B68] text-white flex items-center justify-center font-black text-2xl shadow-md border-2 border-white/50">
+                  S
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-2xl font-black tracking-tight text-[#4A3E3C] font-['Quicksand',sans-serif]">stoody</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32] font-bold">id</span>
+                </div>
+                <p className="text-xs text-[#8A7977] font-semibold">
+                  Ruang Catatan & Materi Kuliah Aesthetic
+                </p>
+              </div>
+
+              {/* Tab Selector: Login vs Register */}
+              <div className="flex bg-[#E8DAC8]/50 p-1 rounded-2xl mb-6">
+                <button
+                  onClick={() => { setAuthMode('login'); setAuthError(''); setAuthSuccess(''); }}
+                  className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                    authMode === 'login' ? 'bg-white text-[#8C5E32] shadow-sm' : 'text-[#8A7977] hover:text-[#4A3E3C]'
+                  }`}
+                >
+                  Masuk (Login)
+                </button>
+                <button
+                  onClick={() => { setAuthMode('register'); setAuthError(''); setAuthSuccess(''); }}
+                  className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all ${
+                    authMode === 'register' ? 'bg-white text-[#8C5E32] shadow-sm' : 'text-[#8A7977] hover:text-[#4A3E3C]'
+                  }`}
+                >
+                  Daftar Akun Baru
+                </button>
+              </div>
+
+              {authError && (
+                <div className="mb-4 p-3 bg-[#FDF0F0] border border-[#E8C0C0] text-[#A04040] text-xs font-semibold rounded-xl">
+                  {authError}
+                </div>
+              )}
+
+              {authSuccess && (
+                <div className="mb-4 p-3 bg-[#F0FDF4] border border-[#C0E8C8] text-[#2E7D32] text-xs font-semibold rounded-xl">
+                  {authSuccess}
+                </div>
+              )}
+
+              {/* Auth Form */}
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+                {authMode === 'register' && (
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Nama Lengkap</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Alysa / Budi"
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                      className="w-full bg-white border border-[#E8DAC8] rounded-xl px-3.5 py-2.5 text-xs text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 font-medium"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Alamat Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="nama@email.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className="w-full bg-white border border-[#E8DAC8] rounded-xl px-3.5 py-2.5 text-xs text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-[#4A3E3C] uppercase tracking-wider">Kata Sandi (Password)</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="••••••••"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className="w-full bg-white border border-[#E8DAC8] rounded-xl px-3.5 py-2.5 text-xs text-[#4A3E3C] focus:outline-none focus:ring-2 focus:ring-[#C89B68]/30 font-medium"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full bg-[#C89B68] hover:bg-[#B88B58] text-white font-extrabold text-xs py-3 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {authLoading ? (
+                    <Sparkles size={16} className="animate-spin" />
+                  ) : (
+                    <span>{authMode === 'login' ? 'Masuk ke Stoody' : 'Buat Akun Stoody Baru'}</span>
+                  )}
+                </button>
+              </form>
+
+              {/* Demo Account Switcher */}
+              <div className="mt-6 pt-5 border-t border-[#E8DAC8] text-center">
+                <p className="text-[11px] text-[#8A7977] font-semibold mb-2.5">
+                  ⚡ Pengujian Cepat Multi-User (Coba Akun Demo):
+                </p>
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => handleDemoAccountSwitch('Alysa', 'alysa@stoody.id')}
+                    className="bg-white border border-[#E8DAC8] hover:border-[#C89B68] text-[#8C5E32] text-xs font-bold py-1.5 px-3 rounded-xl transition-all shadow-xs active:scale-95"
+                  >
+                    🌸 Akun Alysa
+                  </button>
+                  <button
+                    onClick={() => handleDemoAccountSwitch('Budi', 'budi@stoody.id')}
+                    className="bg-white border border-[#E8DAC8] hover:border-[#C89B68] text-[#8C5E32] text-xs font-bold py-1.5 px-3 rounded-xl transition-all shadow-xs active:scale-95"
+                  >
+                    🧢 Akun Budi
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
