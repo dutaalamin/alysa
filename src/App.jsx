@@ -159,7 +159,7 @@ function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle 
 
   return (
     <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2.5' : 'items-center gap-3'}`}>
-      <div className={`${iconSizes} text-[#C89B68] flex items-center justify-center flex-shrink-0 transform hover:scale-105 transition-all`}>
+      <div className={`${iconSizes} text-[#4A3E3C] flex items-center justify-center flex-shrink-0 transform hover:scale-105 transition-all`}>
         <svg viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
           <path d="M 20 18 H 80 L 64 34 H 40 V 43 L 80 54 L 64 66 L 20 48 Z" />
           <path d="M 80 82 H 20 L 36 66 H 60 V 57 L 20 46 L 36 34 L 80 52 Z" />
