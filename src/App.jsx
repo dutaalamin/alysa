@@ -459,23 +459,45 @@ export default function App() {
       else if (isImg) fileTypeLabel = 'Photo / Image Note';
 
       let imageArray = [];
-      let fileUrl = null;
+      let contentText = `[${fileTypeLabel}] ${file.name}`;
+      let filePublicUrl = null;
+
+      // Try uploading to Supabase Storage first
+      try {
+        const storagePath = `uploads/${Date.now()}_${i}_${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('notes-files')
+          .upload(storagePath, file, { upsert: true });
+
+        if (!uploadError && uploadData) {
+          const { data: urlData } = supabase.storage.from('notes-files').getPublicUrl(storagePath);
+          if (urlData?.publicUrl) {
+            filePublicUrl = urlData.publicUrl;
+          }
+        }
+      } catch (storageErr) {
+        console.log('Storage upload skipped:', storageErr);
+      }
 
       if (isImg) {
-        // Compress photo to lightweight ~100KB Data URL so it loads INSTANTLY on refresh across all devices
-        const dataUrl = await compressImageAsDataURL(file);
-        if (dataUrl) {
-          imageArray = [dataUrl];
-          fileUrl = dataUrl;
+        if (filePublicUrl) {
+          // Use the permanent storage URL
+          imageArray = [filePublicUrl];
+        } else {
+          // Fallback: compress to Data URL
+          const dataUrl = await compressImageAsDataURL(file);
+          if (dataUrl) {
+            imageArray = [dataUrl];
+          }
         }
       } else {
-        // Convert PPT, PDF, Excel, Word, TXT into permanent Data URL for direct download & opening
-        const dataUrl = await readDocumentAsDataURL(file);
-        if (dataUrl) {
-          fileUrl = dataUrl;
+        // For documents (PPT, PDF, etc.)
+        if (filePublicUrl) {
+          contentText = `[${fileTypeLabel}] ${file.name}\n\n📥 DOWNLOAD_URL: ${filePublicUrl}`;
         }
       }
 
+      // Only use columns that exist in the Supabase notes table
       const newNote = {
         id: (Date.now() + i).toString(),
         title: file.name,
@@ -483,15 +505,16 @@ export default function App() {
         semester: 'Semester 3',
         date: new Date().toISOString().split('T')[0],
         size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        content: `[${fileTypeLabel}] ${file.name}`,
+        pinned: false,
+        content: contentText,
         images: imageArray,
-        file_url: fileUrl,
-        file_name: file.name,
-        file_type: ext,
         ocr_extracted: false
       };
 
-      await supabase.from('notes').insert([newNote]);
+      const { error: insertError } = await supabase.from('notes').insert([newNote]);
+      if (insertError) {
+        console.error('Supabase insert error:', insertError);
+      }
       setNotes(prev => [newNote, ...prev]);
     }
   };
@@ -1052,48 +1075,64 @@ export default function App() {
                           </h3>
 
                           {/* Document Download & Open Widget */}
-                          {note.file_url ? (
-                            <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl space-y-2">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
-                                  {note.file_type || note.title.split('.').pop() || 'FILE'}
+                          {(() => {
+                            const downloadMatch = note.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
+                            const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
+                            const fileExt = note.title?.split('.').pop()?.toLowerCase() || '';
+                            const isDocument = ['ppt','pptx','pdf','doc','docx','xls','xlsx','csv','txt'].includes(fileExt);
+                            
+                            if (downloadUrl) {
+                              return (
+                                <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-lg bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
+                                      {fileExt || 'FILE'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-extrabold text-[#4A3E3C] truncate">{note.title}</p>
+                                      <p className="text-[10px] text-[#8A7977] font-semibold">{note.size}</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2 pt-1">
+                                    <a
+                                      href={downloadUrl}
+                                      download={note.title}
+                                      className="flex-1 bg-[#C89B68] hover:bg-[#B88B58] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                                    >
+                                      <Download size={13} />
+                                      <span>Download</span>
+                                    </a>
+                                    
+                                    <a
+                                      href={downloadUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                    >
+                                      <ExternalLink size={13} />
+                                      <span>Open</span>
+                                    </a>
+                                  </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-extrabold text-[#4A3E3C] truncate">{note.file_name || note.title}</p>
-                                  <p className="text-[10px] text-[#8A7977] font-semibold">{note.size}</p>
+                              );
+                            } else if (isDocument && !note.images?.length) {
+                              return (
+                                <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-lg bg-[#C89B68]/70 text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
+                                      {fileExt}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-bold text-[#4A3E3C] truncate">{note.title}</p>
+                                      <p className="text-[10px] text-[#8A7977]">Re-upload to enable download</p>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                              
-                              <div className="flex items-center gap-2 pt-1">
-                                <a
-                                  href={note.file_url}
-                                  download={note.file_name || note.title}
-                                  className="flex-1 bg-[#C89B68] hover:bg-[#B88B58] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
-                                >
-                                  <Download size={13} />
-                                  <span>Download File</span>
-                                </a>
-                                
-                                <a
-                                  href={note.file_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
-                                >
-                                  <ExternalLink size={13} />
-                                  <span>Open</span>
-                                </a>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Fallback for documents uploaded before file_url was added */
-                            !note.images?.length && (note.title.includes('.') || note.content.startsWith('[')) && (
-                              <div className="mb-3 p-2.5 bg-[#FAF0E6]/80 border border-[#E8DAC8] rounded-xl text-[11px] text-[#8A7977] flex items-center justify-between">
-                                <span className="font-semibold text-[#8C5E32] truncate">📄 {note.title}</span>
-                                <span className="text-[10px] text-[#8A7977] bg-white px-2 py-0.5 rounded border border-[#E8DAC8]">Re-upload to download</span>
-                              </div>
-                            )
-                          )}
+                              );
+                            }
+                            return null;
+                          })()}
 
                           {/* Photo Preview if exists */}
                           {note.images && note.images.length > 0 && (
@@ -1120,9 +1159,9 @@ export default function App() {
                             </div>
                           )}
 
-                          {/* Text Preview */}
+                          {/* Text Preview (hide download URL marker from display) */}
                           <p className="text-xs text-[#8A7977] whitespace-pre-line leading-relaxed line-clamp-3">
-                            {note.content}
+                            {(note.content || '').replace(/\n\n📥 DOWNLOAD_URL: .+/, '')}
                           </p>
                         </div>
 
