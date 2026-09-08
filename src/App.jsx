@@ -395,10 +395,38 @@ export default function App() {
     }
   };
 
-  const readFileAsDataURL = (file) => {
+  const compressImageAsDataURL = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result);
+      reader.onload = (e) => {
+        const rawDataUrl = e.target.result;
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width / height > maxWidth / maxHeight) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = () => resolve(rawDataUrl);
+        img.src = rawDataUrl;
+      };
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(file);
     });
@@ -422,8 +450,8 @@ export default function App() {
       let imageArray = [];
 
       if (isImg) {
-        // Convert photo to permanent Data URL so it opens on all devices/friends' phones
-        const dataUrl = await readFileAsDataURL(file);
+        // Compress photo to lightweight ~100KB Data URL so it loads INSTANTLY on refresh across all devices
+        const dataUrl = await compressImageAsDataURL(file);
         if (dataUrl) {
           imageArray = [dataUrl];
         }
@@ -1036,7 +1064,13 @@ export default function App() {
                                   onClick={() => setPreviewImage(img)}
                                   className="relative h-32 rounded-xl overflow-hidden cursor-pointer border border-[#E8DAC8] group/img"
                                 >
-                                  <img src={img} alt="Note Photo" className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300" />
+                                  <img 
+                                    src={img} 
+                                    alt="Note Photo" 
+                                    loading="eager"
+                                    decoding="async"
+                                    className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 bg-[#F7EFE5]" 
+                                  />
                                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
                                     <ImageIcon size={14} />
                                     <span>View Photo</span>
