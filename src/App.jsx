@@ -229,6 +229,11 @@ export default function App() {
   const fetchData = async () => {
     try {
       setIsSyncing(true);
+
+      // Remove auto-created 'General' folder & reset notes course if 'General'
+      await supabase.from('folders').delete().eq('name', 'General');
+      await supabase.from('notes').update({ course: '' }).eq('course', 'General');
+
       const { data: notesData, error: notesError } = await supabase.from('notes').select('*').order('created_at', { ascending: false });
       if (!notesError && notesData) {
         setNotes(notesData);
@@ -336,14 +341,7 @@ export default function App() {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    const courseName = newCourse.trim() || selectedFolder || 'General';
-
-    // Auto add folder if it doesn't exist yet
-    if (courseName && !folders.some(f => f.name.toLowerCase() === courseName.toLowerCase())) {
-      const newFolderObj = { id: `f-${Date.now()}`, name: courseName };
-      await supabase.from('folders').insert([newFolderObj]);
-      setFolders(prev => [newFolderObj, ...prev]);
-    }
+    const courseName = newCourse.trim() || selectedFolder || '';
 
     const newNote = {
       id: Date.now().toString(),
@@ -524,7 +522,7 @@ export default function App() {
       const newNote = {
         id: (Date.now() + i).toString(),
         title: file.name,
-        course: selectedFolder || 'General',
+        course: selectedFolder || '',
         semester: 'Semester 3',
         date: new Date().toISOString().split('T')[0],
         size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
@@ -1114,9 +1112,11 @@ export default function App() {
                           <div>
                             {/* Header Card */}
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
-                                {note.course}
-                              </span>
+                              {note.course ? (
+                                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
+                                  {note.course}
+                                </span>
+                              ) : <span />}
 
                               <button
                                 onClick={(e) => {
@@ -1421,9 +1421,11 @@ export default function App() {
             <div className="flex items-start justify-between border-b border-[#F3E5D8] pb-4">
               <div className="space-y-1 pr-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
-                    {activeNoteModal.course}
-                  </span>
+                  {activeNoteModal.course ? (
+                    <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
+                      {activeNoteModal.course}
+                    </span>
+                  ) : null}
                   <span className="text-[11px] font-semibold text-[#8A7977]">
                     {activeNoteModal.date} • {activeNoteModal.size}
                   </span>
