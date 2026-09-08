@@ -204,9 +204,38 @@ export default function App() {
 
   const fileInputRef = useRef(null);
 
+  const getBlobUrlIfNeeded = (url) => {
+    if (!url) return '';
+    if (url.startsWith('data:')) {
+      try {
+        const arr = url.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        return URL.createObjectURL(blob);
+      } catch (e) {
+        return url;
+      }
+    }
+    return url;
+  };
+
+  const handleOpenDocument = (url, title = 'Document') => {
+    if (!url) return;
+    const blobUrl = getBlobUrlIfNeeded(url);
+    window.open(blobUrl, '_blank');
+  };
+
   const handleDownloadFile = (fileUrlOrData, fileName) => {
+    if (!fileUrlOrData) return;
+    const blobUrl = getBlobUrlIfNeeded(fileUrlOrData);
     const link = document.createElement('a');
-    link.href = fileUrlOrData;
+    link.href = blobUrl;
     link.download = fileName || 'download';
     document.body.appendChild(link);
     link.click();
@@ -1322,16 +1351,16 @@ export default function App() {
                                         <span>Download</span>
                                       </a>
 
-                                      <a
-                                        href={downloadUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenDocument(downloadUrl, note.title);
+                                        }}
+                                        className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
                                       >
                                         <ExternalLink size={13} />
                                         <span>Open</span>
-                                      </a>
+                                      </button>
                                     </div>
                                   </div>
                                 );
@@ -1653,19 +1682,17 @@ export default function App() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-[#8A7977]">📑 PDF Live Preview</span>
-                          <a
-                            href={downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1"
+                          <button
+                            onClick={() => handleOpenDocument(downloadUrl, activeNoteModal.title)}
+                            className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer"
                           >
                             <ExternalLink size={12} />
                             <span>Buka Fullscreen</span>
-                          </a>
+                          </button>
                         </div>
                         <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5] shadow-inner">
                           <iframe
-                            src={downloadUrl}
+                            src={getBlobUrlIfNeeded(downloadUrl)}
                             className="w-full h-full border-0"
                             title={activeNoteModal.title}
                           />
