@@ -6,7 +6,8 @@ import {
   Image as ImageIcon, 
   Sparkles, 
   Trash2, 
-  Pin, 
+  Download,
+  ExternalLink, 
   Plus, 
   Search, 
   Grid, 
@@ -379,21 +380,22 @@ export default function App() {
     }
   };
 
-  const handleTogglePin = async (id) => {
-    const target = notes.find(n => n.id === id);
-    if (target) {
-      const newPinned = !target.pinned;
-      await supabase.from('notes').update({ pinned: newPinned }).eq('id', id);
-      setNotes(notes.map(n => n.id === id ? { ...n, pinned: newPinned } : n));
-    }
-  };
+  // Filter notes
+  const filteredNotes = notes.filter(n => {
+    const matchesNav = 
+      activeNav === 'All Notes' ? true :
+      activeNav === 'Photos / Slides' ? (n.images && n.images.length > 0) :
+      activeNav === 'AI Scan' ? n.ocrExtracted : true;
 
-  const handleAddImage = () => {
-    if (imageUrlInput.trim()) {
-      setUploadedImages([...uploadedImages, imageUrlInput.trim()]);
-      setImageUrlInput('');
-    }
-  };
+    const matchesFolder = selectedFolder ? n.course === selectedFolder : true;
+
+    const matchesSearch = 
+      n.title.toLowerCase().includes(search.toLowerCase()) ||
+      n.content.toLowerCase().includes(search.toLowerCase()) ||
+      n.course.toLowerCase().includes(search.toLowerCase());
+
+    return matchesNav && matchesFolder && matchesSearch;
+  });
 
   const compressImageAsDataURL = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) => {
     return new Promise((resolve) => {
@@ -432,6 +434,15 @@ export default function App() {
     });
   };
 
+  const readDocumentAsDataURL = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileUpload = async (e) => {
     const filesList = e.target.files || e.dataTransfer?.files;
     if (!filesList || filesList.length === 0) return;
@@ -448,12 +459,20 @@ export default function App() {
       else if (isImg) fileTypeLabel = 'Photo / Image Note';
 
       let imageArray = [];
+      let fileUrl = null;
 
       if (isImg) {
         // Compress photo to lightweight ~100KB Data URL so it loads INSTANTLY on refresh across all devices
         const dataUrl = await compressImageAsDataURL(file);
         if (dataUrl) {
           imageArray = [dataUrl];
+          fileUrl = dataUrl;
+        }
+      } else {
+        // Convert PPT, PDF, Excel, Word, TXT into permanent Data URL for direct download & opening
+        const dataUrl = await readDocumentAsDataURL(file);
+        if (dataUrl) {
+          fileUrl = dataUrl;
         }
       }
 
@@ -464,9 +483,11 @@ export default function App() {
         semester: 'Semester 3',
         date: new Date().toISOString().split('T')[0],
         size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        pinned: false,
         content: `[${fileTypeLabel}] ${file.name}`,
         images: imageArray,
+        file_url: fileUrl,
+        file_name: file.name,
+        file_type: ext,
         ocr_extracted: false
       };
 
@@ -491,24 +512,6 @@ export default function App() {
       setScanningId(null);
     }, 1200);
   };
-
-  // Filter notes
-  const filteredNotes = notes.filter(n => {
-    const matchesNav = 
-      activeNav === 'All Notes' ? true :
-      activeNav === 'Pinned' ? n.pinned :
-      activeNav === 'Photos / Slides' ? (n.images && n.images.length > 0) :
-      activeNav === 'AI Scan' ? n.ocrExtracted : true;
-
-    const matchesFolder = selectedFolder ? n.course === selectedFolder : true;
-
-    const matchesSearch = 
-      n.title.toLowerCase().includes(search.toLowerCase()) ||
-      n.content.toLowerCase().includes(search.toLowerCase()) ||
-      n.course.toLowerCase().includes(search.toLowerCase());
-
-    return matchesNav && matchesFolder && matchesSearch;
-  });
 
   const totalClassesCount = Object.values(SCHEDULE_DATA).flat().length;
 
@@ -1034,26 +1037,63 @@ export default function App() {
                               {note.course}
                             </span>
 
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleTogglePin(note.id)}
-                                className={`p-1 rounded-full ${note.pinned ? 'text-[#8C5E32] bg-[#F3E5D8]' : 'text-[#8A7977] hover:text-[#8C5E32]'}`}
-                              >
-                                <Pin size={13} className={note.pinned ? 'fill-[#8C5E32]' : ''} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteNote(note.id)}
-                                className="p-1 text-[#8A7977] hover:text-[#A04040] rounded-full"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
+                            <button
+                              onClick={() => handleDeleteNote(note.id)}
+                              className="p-1 text-[#8A7977] hover:text-[#A04040] rounded-full transition-colors"
+                              title="Delete note"
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           </div>
 
                           {/* Title */}
                           <h3 className="font-extrabold text-[#4A3E3C] text-sm mb-2 line-clamp-2 group-hover:text-[#8C5E32] transition-colors">
                             {note.title}
                           </h3>
+
+                          {/* Document Download & Open Widget */}
+                          {note.file_url ? (
+                            <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
+                                  {note.file_type || note.title.split('.').pop() || 'FILE'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-extrabold text-[#4A3E3C] truncate">{note.file_name || note.title}</p>
+                                  <p className="text-[10px] text-[#8A7977] font-semibold">{note.size}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 pt-1">
+                                <a
+                                  href={note.file_url}
+                                  download={note.file_name || note.title}
+                                  className="flex-1 bg-[#C89B68] hover:bg-[#B88B58] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                                >
+                                  <Download size={13} />
+                                  <span>Download File</span>
+                                </a>
+                                
+                                <a
+                                  href={note.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                >
+                                  <ExternalLink size={13} />
+                                  <span>Open</span>
+                                </a>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Fallback for documents uploaded before file_url was added */
+                            !note.images?.length && (note.title.includes('.') || note.content.startsWith('[')) && (
+                              <div className="mb-3 p-2.5 bg-[#FAF0E6]/80 border border-[#E8DAC8] rounded-xl text-[11px] text-[#8A7977] flex items-center justify-between">
+                                <span className="font-semibold text-[#8C5E32] truncate">📄 {note.title}</span>
+                                <span className="text-[10px] text-[#8A7977] bg-white px-2 py-0.5 rounded border border-[#E8DAC8]">Re-upload to download</span>
+                              </div>
+                            )
+                          )}
 
                           {/* Photo Preview if exists */}
                           {note.images && note.images.length > 0 && (
