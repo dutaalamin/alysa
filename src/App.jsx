@@ -155,10 +155,11 @@ const INITIAL_FOLDERS = [];
 // Hostinger-Style Geometric Monogram Logo & Bold ALL-CAPS Typography
 function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle = false }) {
   const iconSizes = size === 'lg' ? 'w-10 h-10' : size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
-  const textSizes = size === 'lg' ? 'text-2xl tracking-[0.18em]' : size === 'sm' ? 'text-base tracking-[0.14em]' : 'text-xl tracking-[0.16em]';
+  const textSizes = size === 'lg' ? 'text-2xl tracking-[0.16em]' : size === 'sm' ? 'text-base tracking-[0.12em]' : 'text-xl tracking-[0.14em]';
+  const gapClass = size === 'lg' ? 'gap-2.5' : size === 'sm' ? 'gap-1.5' : 'gap-2';
 
   return (
-    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2.5' : 'items-center gap-3'}`}>
+    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2' : `items-center ${gapClass}`}`}>
       <div className={`${iconSizes} text-[#4A3E3C] flex items-center justify-center flex-shrink-0 transform hover:scale-105 transition-all`}>
         <svg viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
           <path d="M 20 18 H 80 L 64 34 H 40 V 43 L 80 54 L 64 66 L 20 48 Z" />
