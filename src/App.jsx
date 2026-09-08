@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './supabaseClient';
-import Tesseract from 'tesseract.js';
+import { extractTextFromFile } from './utils/extractor';
 
 // Class Schedule Data transcribed from Alysa's screenshots
 const SCHEDULE_DATA = {
@@ -514,9 +514,18 @@ export default function App() {
           }
         }
       } else {
-        // For documents (PPT, PDF, etc.)
+        // For documents (PPT, PDF, Word, Excel, etc.)
         if (filePublicUrl) {
           contentText = `[${fileTypeLabel}] ${file.name}\n\n📥 DOWNLOAD_URL: ${filePublicUrl}`;
+        }
+        // Auto extract text content from document upon upload
+        try {
+          const autoExtracted = await extractTextFromFile(file, file.name);
+          if (autoExtracted && !autoExtracted.startsWith('(')) {
+            contentText += `\n\n--- 📑 Extracted Document Text (${fileTypeLabel}) ---\n` + autoExtracted;
+          }
+        } catch (autoErr) {
+          console.log('Auto document extraction notice:', autoErr);
         }
       }
 
@@ -543,37 +552,45 @@ export default function App() {
   };
 
   const handleRealAIScan = async (note) => {
-    if (!note || !note.images || note.images.length === 0) return;
+    if (!note) return;
     const noteId = note.id;
     setScanningId(noteId);
-    setScanStatus(prev => ({ ...prev, [noteId]: 'Menyiapkan OCR engine...' }));
+    setScanStatus(prev => ({ ...prev, [noteId]: 'Menganalisis file...' }));
 
     try {
       let extractedCombined = '';
-      for (let i = 0; i < note.images.length; i++) {
-        const imgUrl = note.images[i];
-        setScanStatus(prev => ({ ...prev, [noteId]: `Membaca gambar ${i + 1}/${note.images.length}...` }));
 
-        const result = await Tesseract.recognize(imgUrl, 'eng+ind', {
-          logger: (m) => {
-            if (m.status === 'recognizing text') {
-              const pct = Math.round((m.progress || 0) * 100);
-              setScanStatus(prev => ({ ...prev, [noteId]: `Scan (${pct}%)...` }));
-            }
+      // 1. Process attached images via Tesseract OCR
+      if (note.images && note.images.length > 0) {
+        for (let i = 0; i < note.images.length; i++) {
+          const imgUrl = note.images[i];
+          const text = await extractTextFromFile(imgUrl, `${note.title || 'image'}.jpg`, (msg) => {
+            setScanStatus(prev => ({ ...prev, [noteId]: msg }));
+          });
+          if (text) {
+            extractedCombined += (extractedCombined ? '\n\n' : '') + `--- 📄 Hasil Scan AI (Gambar ${i + 1}) ---\n` + text;
           }
-        });
+        }
+      }
 
-        const text = result.data?.text?.trim();
+      // 2. Process attached Document (PDF, Word, Excel, PPTX, TXT) if download URL exists
+      const downloadMatch = note.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
+      const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
+
+      if (downloadUrl) {
+        const text = await extractTextFromFile(downloadUrl, note.title, (msg) => {
+          setScanStatus(prev => ({ ...prev, [noteId]: msg }));
+        });
         if (text) {
-          extractedCombined += (extractedCombined ? '\n\n' : '') + `--- 📄 Hasil Scan AI (Gambar ${i + 1}) ---\n` + text;
+          extractedCombined += (extractedCombined ? '\n\n' : '') + `--- 📑 Hasil Ekstraksi Teks Dokumen ---\n` + text;
         }
       }
 
       if (!extractedCombined) {
-        extractedCombined = '--- 📄 Hasil Scan AI ---\n(Tidak ada teks yang dapat terdeteksi pada gambar)';
+        extractedCombined = '--- 📄 Hasil Scan AI ---\n(Tidak ada teks yang dapat diekstrak dari file ini)';
       }
 
-      const existingContent = note.content || '';
+      const existingContent = (note.content || '').trim();
       const updatedContent = existingContent
         ? `${existingContent}\n\n${extractedCombined}`
         : extractedCombined;
@@ -606,8 +623,8 @@ export default function App() {
         }));
       }
     } catch (err) {
-      console.error('Tesseract OCR error:', err);
-      alert('Gagal melakukan scan teks dari gambar: ' + (err.message || err));
+      console.error('Text extraction error:', err);
+      alert('Gagal mengekstrak teks dari file: ' + (err.message || err));
     } finally {
       setScanningId(null);
       setScanStatus(prev => ({ ...prev, [noteId]: null }));
@@ -1321,7 +1338,7 @@ export default function App() {
                                 <span>.txt</span>
                               </button>
 
-                              {note.images && note.images.length > 0 && (
+                              {((note.images && note.images.length > 0) || note.content?.includes('DOWNLOAD_URL')) && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1539,18 +1556,31 @@ export default function App() {
                 </div>
               )}
 
-              {/* Document Download Widget */}
+              {/* Document Download & Extract Text Widget */}
               {(() => {
                 const downloadMatch = activeNoteModal.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
                 const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
                 if (downloadUrl) {
                   return (
-                    <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex items-center justify-between gap-3">
+                    <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <p className="text-xs font-extrabold text-[#4A3E3C]">{activeNoteModal.title}</p>
-                        <p className="text-[10px] text-[#8A7977]">Document file ready for download</p>
+                        <p className="text-[10px] text-[#8A7977]">Document file ready for preview & text extraction</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => handleRealAIScan(activeNoteModal)}
+                          disabled={scanningId === activeNoteModal.id}
+                          className="bg-[#F3E5D8] hover:bg-[#E8D4C1] text-[#8C5E32] text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                        >
+                          <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
+                          <span>
+                            {scanningId === activeNoteModal.id
+                              ? (scanStatus[activeNoteModal.id] || 'Reading file...')
+                              : 'Extract Document Text'}
+                          </span>
+                        </button>
+
                         <a
                           href={downloadUrl}
                           download={activeNoteModal.title}
@@ -1558,15 +1588,6 @@ export default function App() {
                         >
                           <Download size={14} />
                           <span>Download File</span>
-                        </a>
-                        <a
-                          href={downloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-bold py-2 px-3.5 rounded-xl flex items-center gap-1.5"
-                        >
-                          <ExternalLink size={14} />
-                          <span>Open</span>
                         </a>
                       </div>
                     </div>
