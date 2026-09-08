@@ -967,242 +967,262 @@ export default function App() {
               </p>
             </div>
 
-            {/* Folders Section */}
-            {!selectedFolder && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs font-black tracking-widest text-[#8A7977] uppercase">
-                    Course Folders ({folders.length})
-                  </h2>
-
-                  <button
-                    onClick={() => setIsFolderModalOpen(true)}
-                    className="text-[11px] text-[#8C5E32] font-bold hover:underline flex items-center gap-1"
-                  >
-                    <Plus size={12} />
-                    <span>Add Folder</span>
-                  </button>
-                </div>
-
-                {folders.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {folders.map((f) => (
-                      <div
-                        key={f.id}
-                        onClick={() => setSelectedFolder(f.name)}
-                        className="bg-white border border-[#E8DAC8] rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-[#C89B68] hover:-translate-y-0.5 transition-all group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#F3E5D8] text-[#8C5E32] flex items-center justify-center group-hover:scale-105 transition-transform">
-                            <Folder size={20} className="fill-[#C89B68]/30 text-[#C89B68]" />
-                          </div>
-                          <div>
-                            <h3 className="text-xs font-bold text-[#4A3E3C] line-clamp-1 group-hover:text-[#8C5E32] transition-colors">
-                              {f.name}
-                            </h3>
-                            <p className="text-[10px] text-[#8A7977]">{notes.filter(n => n.course === f.name).length} Notes</p>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteFolder(f.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-[#8A7977] hover:text-[#A04040] transition-opacity"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
+            {/* Unified Folders & Files Section */}
+            <div className="space-y-4">
+              {/* Breadcrumb Header when viewing inside a specific folder */}
+              {selectedFolder && (
+                <div className="flex items-center justify-between bg-white border border-[#E8DAC8] rounded-2xl px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedFolder(null)}
+                      className="text-xs font-extrabold text-[#8C5E32] hover:underline flex items-center gap-1 bg-[#FAF0E6] px-2.5 py-1 rounded-lg"
+                    >
+                      ← Home
+                    </button>
+                    <span className="text-[#8A7977] font-bold text-xs">/</span>
+                    <div className="flex items-center gap-1.5 font-extrabold text-[#4A3E3C] text-sm">
+                      <Folder size={16} className="text-[#C89B68]" />
+                      <span>{selectedFolder}</span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="p-6 text-center bg-white/60 border border-[#E8DAC8] rounded-2xl text-xs text-[#8A7977]">
-                    No folders yet. Click <strong>+ Course Folder</strong> to create a new folder.
-                  </div>
-                )}
-              </div>
-            )}
 
-            {/* Notes Grid Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-black tracking-widest text-[#8A7977] uppercase">
-                  {selectedFolder ? `${selectedFolder}` : 'All Files'} ({filteredNotes.length})
-                </h2>
-
-                {selectedFolder && (
-                  <button
-                    onClick={() => setSelectedFolder(null)}
-                    className="text-[10px] text-[#8C5E32] font-bold hover:underline"
-                  >
-                    View All Folders
-                  </button>
-                )}
-              </div>
-
-              {filteredNotes.length > 0 ? (
-                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5' : 'space-y-3'}>
-                  <AnimatePresence>
-                    {filteredNotes.map((note) => (
-                      <motion.div
-                        key={note.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.96 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                        className="bg-white border border-[#E8DAC8] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col justify-between group"
-                      >
-                        <div>
-                          {/* Header Card */}
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
-                              {note.course}
-                            </span>
-
-                            <button
-                              onClick={() => handleDeleteNote(note.id)}
-                              className="p-1 text-[#8A7977] hover:text-[#A04040] rounded-full transition-colors"
-                              title="Delete note"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-
-                          {/* Title */}
-                          <h3 className="font-extrabold text-[#4A3E3C] text-sm mb-2 line-clamp-2 group-hover:text-[#8C5E32] transition-colors">
-                            {note.title}
-                          </h3>
-
-                          {/* Document Download & Open Widget */}
-                          {(() => {
-                            const downloadMatch = note.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
-                            const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
-                            const fileExt = note.title?.split('.').pop()?.toLowerCase() || '';
-                            const isDocument = ['ppt','pptx','pdf','doc','docx','xls','xlsx','csv','txt'].includes(fileExt);
-                            
-                            if (downloadUrl) {
-                              return (
-                                <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-lg bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
-                                      {fileExt || 'FILE'}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-extrabold text-[#4A3E3C] truncate">{note.title}</p>
-                                      <p className="text-[10px] text-[#8A7977] font-semibold">{note.size}</p>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-2 pt-1">
-                                    <a
-                                      href={downloadUrl}
-                                      download={note.title}
-                                      className="flex-1 bg-[#C89B68] hover:bg-[#B88B58] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
-                                    >
-                                      <Download size={13} />
-                                      <span>Download</span>
-                                    </a>
-                                    
-                                    <a
-                                      href={downloadUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
-                                    >
-                                      <ExternalLink size={13} />
-                                      <span>Open</span>
-                                    </a>
-                                  </div>
-                                </div>
-                              );
-                            } else if (isDocument && !note.images?.length) {
-                              return (
-                                <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-lg bg-[#C89B68]/70 text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
-                                      {fileExt}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-bold text-[#4A3E3C] truncate">{note.title}</p>
-                                      <p className="text-[10px] text-[#8A7977]">Re-upload to enable download</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          })()}
-
-                          {/* Photo Preview if exists */}
-                          {note.images && note.images.length > 0 && (
-                            <div className="mb-3">
-                              {note.images.map((img, i) => (
-                                <div
-                                  key={i}
-                                  onClick={() => setPreviewImage(img)}
-                                  className="relative h-32 rounded-xl overflow-hidden cursor-pointer border border-[#E8DAC8] group/img"
-                                >
-                                  <img 
-                                    src={img} 
-                                    alt="Note Photo" 
-                                    loading="eager"
-                                    decoding="async"
-                                    className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 bg-[#F7EFE5]" 
-                                  />
-                                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
-                                    <ImageIcon size={14} />
-                                    <span>View Photo</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Text Preview (hide download URL marker from display) */}
-                          <p className="text-xs text-[#8A7977] whitespace-pre-line leading-relaxed line-clamp-3">
-                            {(note.content || '').replace(/\n\n📥 DOWNLOAD_URL: .+/, '')}
-                          </p>
-                        </div>
-
-                        {/* Footer Card */}
-                        <div className="mt-4 pt-3 border-t border-[#F3E5D8] flex items-center justify-between">
-                          <span className="text-[10px] text-[#8A7977] font-semibold flex items-center gap-1">
-                            <Clock size={12} />
-                            {note.date} • {note.size}
-                          </span>
-
-                          {note.images && note.images.length > 0 && (
-                            <button
-                              onClick={() => handleSimulateAIScan(note.id)}
-                              disabled={scanningId === note.id}
-                              className="text-[10px] font-bold text-[#8C5E32] bg-[#F3E5D8] hover:bg-[#E8D4C1] px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
-                            >
-                              <Sparkles size={11} className={scanningId === note.id ? 'animate-spin' : ''} />
-                              <span>{scanningId === note.id ? 'Scanning...' : 'AI Scan'}</span>
-                            </button>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <div className="py-16 text-center bg-white border border-[#E8DAC8] rounded-2xl p-8 max-w-sm mx-auto shadow-sm">
-                  <div className="w-12 h-12 rounded-full bg-[#F3E5D8] text-[#8C5E32] mx-auto flex items-center justify-center text-xl mb-3">
-                    📝
-                  </div>
-                  <h3 className="font-bold text-[#4A3E3C] text-sm mb-1">No Notes Yet</h3>
-                  <p className="text-xs text-[#8A7977] mb-4">Click the button below to create your first note.</p>
-                  <button
-                    onClick={() => setIsNoteModalOpen(true)}
-                    className="bg-[#C89B68] hover:bg-[#B88B58] text-white font-bold text-xs px-4 py-2 rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 mx-auto"
-                  >
-                    <Plus size={14} />
-                    <span>New Note</span>
-                  </button>
+                  <span className="text-xs font-bold text-[#8A7977]">
+                    {filteredNotes.length} {filteredNotes.length === 1 ? 'File' : 'Files'}
+                  </span>
                 </div>
               )}
+
+              {/* Combined Content Grid */}
+              {(() => {
+                const currentFolders = selectedFolder
+                  ? []
+                  : folders.filter(f => f.name.toLowerCase().includes(search.toLowerCase()));
+
+                const hasItems = currentFolders.length > 0 || filteredNotes.length > 0;
+
+                if (!hasItems) {
+                  return (
+                    <div className="py-16 text-center bg-white border border-[#E8DAC8] rounded-2xl p-8 max-w-sm mx-auto shadow-sm">
+                      <div className="w-12 h-12 rounded-full bg-[#F3E5D8] text-[#8C5E32] mx-auto flex items-center justify-center text-xl mb-3">
+                        📂
+                      </div>
+                      <h3 className="font-bold text-[#4A3E3C] text-sm mb-1">
+                        {selectedFolder ? `Folder "${selectedFolder}" is empty` : 'No files or folders found'}
+                      </h3>
+                      <p className="text-xs text-[#8A7977] mb-4">
+                        Upload files above or click below to create a note or folder.
+                      </p>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => setIsNoteModalOpen(true)}
+                          className="bg-[#C89B68] hover:bg-[#B88B58] text-white font-bold text-xs px-4 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                        >
+                          <Plus size={14} />
+                          <span>New Note</span>
+                        </button>
+                        <button
+                          onClick={() => setIsFolderModalOpen(true)}
+                          className="bg-[#FAF0E6] hover:bg-[#F3E5D8] text-[#4A3E3C] border border-[#E8DAC8] font-bold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5"
+                        >
+                          <FolderPlus size={14} className="text-[#C89B68]" />
+                          <span>New Folder</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5' : 'space-y-3'}>
+                    <AnimatePresence>
+                      {/* Render Folder Cards */}
+                      {currentFolders.map((f) => {
+                        const folderNoteCount = notes.filter(n => n.course === f.name).length;
+                        return (
+                          <motion.div
+                            key={f.id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.96 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.96 }}
+                            onClick={() => setSelectedFolder(f.name)}
+                            className="bg-white border border-[#E8DAC8] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col justify-between group cursor-pointer"
+                          >
+                            <div>
+                              {/* Big Folder Icon Banner */}
+                              <div className="h-28 rounded-xl bg-[#FAF0E6] flex items-center justify-center mb-3 group-hover:bg-[#F3E5D8] transition-colors relative">
+                                <Folder size={44} className="fill-[#C89B68]/30 text-[#C89B68] group-hover:scale-105 transition-transform duration-200" />
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteFolder(f.id);
+                                  }}
+                                  className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-white rounded-lg text-[#8A7977] hover:text-[#A04040] opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                  title="Delete folder"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+
+                              {/* Folder Title */}
+                              <h3 className="font-extrabold text-[#4A3E3C] text-sm mb-1 truncate group-hover:text-[#8C5E32] transition-colors">
+                                {f.name}
+                              </h3>
+                              <p className="text-[10px] font-semibold text-[#8A7977]">
+                                {folderNoteCount} {folderNoteCount === 1 ? 'file' : 'files'}
+                              </p>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+
+                      {/* Render Note / File Cards */}
+                      {filteredNotes.map((note) => (
+                        <motion.div
+                          key={note.id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.96 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.96 }}
+                          className="bg-white border border-[#E8DAC8] rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-[#C89B68] transition-all flex flex-col justify-between group"
+                        >
+                          <div>
+                            {/* Header Card */}
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#F3E5D8] text-[#8C5E32]">
+                                {note.course}
+                              </span>
+
+                              <button
+                                onClick={() => handleDeleteNote(note.id)}
+                                className="p-1 text-[#8A7977] hover:text-[#A04040] rounded-full transition-colors"
+                                title="Delete note"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="font-extrabold text-[#4A3E3C] text-sm mb-2 line-clamp-2 group-hover:text-[#8C5E32] transition-colors">
+                              {note.title}
+                            </h3>
+
+                            {/* Document Download & Open Widget */}
+                            {(() => {
+                              const downloadMatch = note.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
+                              const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
+                              const fileExt = note.title?.split('.').pop()?.toLowerCase() || '';
+                              const isDocument = ['ppt','pptx','pdf','doc','docx','xls','xlsx','csv','txt'].includes(fileExt);
+
+                              if (downloadUrl) {
+                                return (
+                                  <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 rounded-lg bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
+                                        {fileExt || 'FILE'}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-extrabold text-[#4A3E3C] truncate">{note.title}</p>
+                                        <p className="text-[10px] text-[#8A7977] font-semibold">{note.size}</p>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 pt-1">
+                                      <a
+                                        href={downloadUrl}
+                                        download={note.title}
+                                        className="flex-1 bg-[#C89B68] hover:bg-[#B88B58] text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                                      >
+                                        <Download size={13} />
+                                        <span>Download</span>
+                                      </a>
+
+                                      <a
+                                        href={downloadUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-[11px] font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                      >
+                                        <ExternalLink size={13} />
+                                        <span>Open</span>
+                                      </a>
+                                    </div>
+                                  </div>
+                                );
+                              } else if (isDocument && !note.images?.length) {
+                                return (
+                                  <div className="mb-3 p-3 bg-[#FAF0E6] border border-[#E8DAC8] rounded-xl">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 rounded-lg bg-[#C89B68]/70 text-white flex items-center justify-center font-extrabold text-[10px] shadow-sm uppercase">
+                                        {fileExt}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-bold text-[#4A3E3C] truncate">{note.title}</p>
+                                        <p className="text-[10px] text-[#8A7977]">Re-upload to enable download</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+
+                            {/* Photo Preview if exists */}
+                            {note.images && note.images.length > 0 && (
+                              <div className="mb-3">
+                                {note.images.map((img, i) => (
+                                  <div
+                                    key={i}
+                                    onClick={() => setPreviewImage(img)}
+                                    className="relative h-32 rounded-xl overflow-hidden cursor-pointer border border-[#E8DAC8] group/img"
+                                  >
+                                    <img
+                                      src={img}
+                                      alt="Note Photo"
+                                      loading="eager"
+                                      decoding="async"
+                                      className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300 bg-[#F7EFE5]"
+                                    />
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                                      <ImageIcon size={14} />
+                                      <span>View Photo</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Text Preview */}
+                            <p className="text-xs text-[#8A7977] whitespace-pre-line leading-relaxed line-clamp-3">
+                              {(note.content || '').replace(/\n\n📥 DOWNLOAD_URL: .+/, '')}
+                            </p>
+                          </div>
+
+                          {/* Footer Card */}
+                          <div className="mt-4 pt-3 border-t border-[#F3E5D8] flex items-center justify-between">
+                            <span className="text-[10px] text-[#8A7977] font-semibold flex items-center gap-1">
+                              <Clock size={12} />
+                              {note.date} • {note.size}
+                            </span>
+
+                            {note.images && note.images.length > 0 && (
+                              <button
+                                onClick={() => handleSimulateAIScan(note.id)}
+                                disabled={scanningId === note.id}
+                                className="text-[10px] font-bold text-[#8C5E32] bg-[#F3E5D8] hover:bg-[#E8D4C1] px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                              >
+                                <Sparkles size={11} className={scanningId === note.id ? 'animate-spin' : ''} />
+                                <span>{scanningId === note.id ? 'Scanning...' : 'AI Scan'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                );
+              })()}
             </div>
           </>
         )}
