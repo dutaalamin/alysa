@@ -262,7 +262,9 @@ export default function App() {
       .replace(/--- 📑 Page \d+ ---\n?/gi, '')
       .replace(/--- 📄 Hasil Scan AI \([^)]+\) ---\n?/gi, '')
       .replace(/--- 📄 Hasil Scan AI ---\n?/gi, '')
+      .replace(/--- 🖼️ Slide \d+ ---\n?/gi, '')
       .replace(/^\[(PDF File|Photo \/ Image Note|Document File|PowerPoint Presentation|Excel Spreadsheet|DOCX File|TXT File)\] .+\n?/gi, '')
+      .replace(/<\/?[a-z0-9:]+[^>]*>/gi, '') // Strip remaining XML tags like <a:pPr>, <p:txBody>
       .trim();
   };
 
@@ -673,12 +675,12 @@ export default function App() {
       }
 
       if (!extractedCombined) {
-        extractedCombined = '--- 📄 Hasil Scan AI ---\n(Tidak ada teks yang dapat diekstrak dari file ini)';
+        extractedCombined = '(Tidak ada teks yang dapat diekstrak dari file ini)';
       }
 
-      const existingContent = (note.content || '').trim();
-      const updatedContent = existingContent
-        ? `${existingContent}\n\n${extractedCombined}`
+      const fileHeader = note.content?.split('\n\n')?.[0] || `[Document File] ${note.title}`;
+      const updatedContent = downloadUrl
+        ? `${fileHeader}\n\n📥 DOWNLOAD_URL: ${downloadUrl}\n\n${extractedCombined}`
         : extractedCombined;
 
       // Update Supabase Database
@@ -1760,7 +1762,7 @@ export default function App() {
                               className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95"
                             >
                               <Download size={14} className="text-[#C89B68]" />
-                              <span>Download PDF / File Asli</span>
+                              <span>Download File {fileExt ? fileExt.toUpperCase() : 'Asli'}</span>
                             </a>
                           </>
                         ) : (

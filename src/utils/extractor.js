@@ -86,15 +86,26 @@ export async function extractTextFromFile(fileOrUrl, fileName = '', onProgress =
       });
 
       let slidesText = '';
+      const parser = new DOMParser();
+
       for (let i = 0; i < slideFiles.length; i++) {
         const xmlContent = await zip.files[slideFiles[i]].async('text');
-        const textMatches = [...xmlContent.matchAll(/<a:t[^>]*>(.*?)<\/a:t>/g)].map(m => m[1]);
-        if (textMatches.length > 0) {
-          slidesText += (slidesText ? '\n\n' : '') + textMatches.join(' ');
+        const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+        const textNodes = xmlDoc.getElementsByTagName('a:t');
+        const slideStrings = [];
+        for (let j = 0; j < textNodes.length; j++) {
+          const t = textNodes[j].textContent?.trim();
+          if (t && !slideStrings.includes(t)) {
+            slideStrings.push(t);
+          }
+        }
+        if (slideStrings.length > 0) {
+          slidesText += (slidesText ? '\n\n' : '') + slideStrings.join(' ');
         }
       }
       return slidesText.trim() || '(Empty PowerPoint slides)';
     } catch (e) {
+      console.error('PPTX extraction error:', e);
       return '(Could not parse PowerPoint file)';
     }
   }
