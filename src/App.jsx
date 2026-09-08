@@ -584,6 +584,36 @@ export default function App() {
         if (text) {
           extractedCombined += (extractedCombined ? '\n\n' : '') + `--- 📑 Hasil Ekstraksi Teks Dokumen ---\n` + text;
         }
+      } else if (!note.images || note.images.length === 0) {
+        // If file has no URL or images (e.g. older upload), open file picker to extract
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,image/*';
+        input.onchange = async (e) => {
+          const selectedFile = e.target.files?.[0];
+          if (selectedFile) {
+            setScanStatus(prev => ({ ...prev, [noteId]: 'Membaca file...' }));
+            try {
+              const text = await extractTextFromFile(selectedFile, selectedFile.name, (msg) => {
+                setScanStatus(prev => ({ ...prev, [noteId]: msg }));
+              });
+              if (text) {
+                const updatedContent = `${note.content || ''}\n\n--- 📑 Hasil Ekstraksi Teks (${selectedFile.name}) ---\n${text}`;
+                await supabase.from('notes').update({ content: updatedContent, ocr_extracted: true }).eq('id', noteId);
+                setNotes(prev => prev.map(n => n.id === noteId ? { ...n, content: updatedContent } : n));
+                if (activeNoteModal && activeNoteModal.id === noteId) {
+                  setActiveNoteModal(prev => ({ ...prev, content: updatedContent }));
+                }
+              }
+            } catch (err) {
+              alert('Gagal mengekstrak file: ' + err.message);
+            }
+          }
+          setScanningId(null);
+          setScanStatus(prev => ({ ...prev, [noteId]: null }));
+        };
+        input.click();
+        return;
       }
 
       if (!extractedCombined) {
@@ -1556,44 +1586,83 @@ export default function App() {
                 </div>
               )}
 
-              {/* Document Download & Extract Text Widget */}
+              {/* PDF & Document Live Preview and AI Text Extractor Bar */}
               {(() => {
+                const fileExt = activeNoteModal.title?.split('.').pop()?.toLowerCase() || '';
                 const downloadMatch = activeNoteModal.content?.match?.(/📥 DOWNLOAD_URL: (.+)/);
                 const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
-                if (downloadUrl) {
-                  return (
-                    <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-extrabold text-[#4A3E3C]">{activeNoteModal.title}</p>
-                        <p className="text-[10px] text-[#8A7977]">Document file ready for preview & text extraction</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          onClick={() => handleRealAIScan(activeNoteModal)}
-                          disabled={scanningId === activeNoteModal.id}
-                          className="bg-[#F3E5D8] hover:bg-[#E8D4C1] text-[#8C5E32] text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
-                        >
-                          <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
-                          <span>
-                            {scanningId === activeNoteModal.id
-                              ? (scanStatus[activeNoteModal.id] || 'Reading file...')
-                              : 'Extract Document Text'}
-                          </span>
-                        </button>
+                const isPdf = fileExt === 'pdf';
+                const isDoc = ['pdf','doc','docx','ppt','pptx','xls','xlsx','csv','txt'].includes(fileExt);
 
-                        <a
-                          href={downloadUrl}
-                          download={activeNoteModal.title}
-                          className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-bold py-2 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5 active:scale-95"
-                        >
-                          <Download size={14} />
-                          <span>Download File</span>
-                        </a>
+                return (
+                  <div className="space-y-3">
+                    {/* Live PDF Preview iframe if available */}
+                    {isPdf && downloadUrl && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#8A7977]">📑 PDF Live Preview</span>
+                          <a
+                            href={downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink size={12} />
+                            <span>Buka Fullscreen</span>
+                          </a>
+                        </div>
+                        <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5] shadow-inner">
+                          <iframe
+                            src={downloadUrl}
+                            className="w-full h-full border-0"
+                            title={activeNoteModal.title}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  );
-                }
-                return null;
+                    )}
+
+                    {/* Document Control Widget with AI Extract Button */}
+                    {(isDoc || downloadUrl) && (
+                      <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-xs uppercase shadow-sm">
+                            {fileExt || 'FILE'}
+                          </div>
+                          <div>
+                            <p className="text-xs font-extrabold text-[#4A3E3C] truncate max-w-xs">{activeNoteModal.title}</p>
+                            <p className="text-[10px] text-[#8A7977] font-semibold">Dokumen {fileExt.toUpperCase()} • Siap Dibaca AI</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => handleRealAIScan(activeNoteModal)}
+                            disabled={scanningId === activeNoteModal.id}
+                            className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                          >
+                            <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
+                            <span>
+                              {scanningId === activeNoteModal.id
+                                ? (scanStatus[activeNoteModal.id] || 'Membaca dokumen...')
+                                : '✨ AI Baca Teks Dokumen'}
+                            </span>
+                          </button>
+
+                          {downloadUrl && (
+                            <a
+                              href={downloadUrl}
+                              download={activeNoteModal.title}
+                              className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-bold py-2 px-3 rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95"
+                            >
+                              <Download size={14} />
+                              <span>Download</span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
               })()}
 
               {/* Note Text Content */}
