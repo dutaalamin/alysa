@@ -24,7 +24,8 @@ import {
   MapPin,
   Building2,
   Info,
-  Menu
+  Menu,
+  SquarePen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './supabaseClient';
@@ -440,17 +441,22 @@ export default function App() {
 
                 <nav className="space-y-1 pt-2">
                   {[
-                    { label: 'All Notes', icon: FileText },
-                    { label: 'Class Schedule', icon: Calendar }
+                    { label: 'All Notes', icon: FileText, type: 'nav' },
+                    { label: 'New Note', icon: SquarePen, type: 'action' },
+                    { label: 'Class Schedule', icon: Calendar, type: 'nav' }
                   ].map((item) => {
                     const Icon = item.icon;
-                    const isActive = activeNav === item.label && !selectedFolder;
+                    const isActive = item.type === 'nav' && activeNav === item.label && !selectedFolder;
                     return (
                       <button
                         key={item.label}
                         onClick={() => {
-                          setActiveNav(item.label);
-                          setSelectedFolder(null);
+                          if (item.type === 'action') {
+                            setIsNoteModalOpen(true);
+                          } else {
+                            setActiveNav(item.label);
+                            setSelectedFolder(null);
+                          }
                           setIsMobileMenuOpen(false);
                         }}
                         className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
@@ -508,39 +514,36 @@ export default function App() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Button */}
           <div className="space-y-2">
-            <button
-              onClick={() => setIsNoteModalOpen(true)}
-              className="w-full bg-[#C89B68] hover:bg-[#B88B58] text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
-            >
-              <Plus size={16} />
-              <span>New Note</span>
-            </button>
-
             <button
               onClick={() => setIsFolderModalOpen(true)}
               className="w-full bg-[#FAF0E6] hover:bg-[#F3E5D8] text-[#4A3E3C] border border-[#E8DAC8] font-bold text-xs py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
             >
               <FolderPlus size={15} className="text-[#C89B68]" />
-              <span>Course Folder</span>
+              <span>New Folder</span>
             </button>
           </div>
 
           {/* Side Navigation Items */}
           <nav className="space-y-1 pt-2">
             {[
-              { label: 'All Notes', icon: FileText },
-              { label: 'Class Schedule', icon: Calendar }
+              { label: 'All Notes', icon: FileText, type: 'nav' },
+              { label: 'New Note', icon: SquarePen, type: 'action' },
+              { label: 'Class Schedule', icon: Calendar, type: 'nav' }
             ].map((item) => {
               const Icon = item.icon;
-              const isActive = activeNav === item.label && !selectedFolder;
+              const isActive = item.type === 'nav' && activeNav === item.label && !selectedFolder;
               return (
                 <button
                   key={item.label}
                   onClick={() => {
-                    setActiveNav(item.label);
-                    setSelectedFolder(null);
+                    if (item.type === 'action') {
+                      setIsNoteModalOpen(true);
+                    } else {
+                      setActiveNav(item.label);
+                      setSelectedFolder(null);
+                    }
                   }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     isActive 
