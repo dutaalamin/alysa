@@ -1733,6 +1733,8 @@ export default function App() {
                 const downloadUrl = downloadMatch ? downloadMatch[1].trim() : null;
                 const isPdf = fileExt === 'pdf';
                 const isDoc = ['pdf','doc','docx','ppt','pptx','xls','xlsx','csv','txt'].includes(fileExt);
+                const isTxtOrPlainNote = fileExt === 'txt' || !fileExt || !['pdf','doc','docx','ppt','pptx','xls','xlsx','jpg','jpeg','png','webp'].includes(fileExt);
+                const showDocControlWidget = downloadUrl || (!isTxtOrPlainNote && ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(fileExt));
 
                 return (
                   <div className="space-y-3">
@@ -1761,21 +1763,21 @@ export default function App() {
                           </div>
                         )}
 
-                        {['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'].includes(fileExt) && downloadUrl.startsWith('http') && (
+                        {['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'].includes(fileExt) && (
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-[#8A7977]">🖼️ {fileExt.toUpperCase()} Slide & Document Preview</span>
+                              <span className="text-xs font-bold text-[#8A7977]">📊 Office Document Preview</span>
                               <button
                                 onClick={() => handleOpenDocument(downloadUrl, activeNoteModal.title)}
                                 className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer"
                               >
                                 <ExternalLink size={12} />
-                                <span>Buka Fullscreen</span>
+                                <span>Buka Dokumen</span>
                               </button>
                             </div>
-                            <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5] shadow-inner">
+                            <div className="w-full h-[450px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#FAF4EC] shadow-sm">
                               <iframe
-                                src={`https://docs.google.com/viewer?url=${encodeURIComponent(downloadUrl)}&embedded=true`}
+                                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(downloadUrl)}`}
                                 className="w-full h-full border-0"
                                 title={activeNoteModal.title}
                               />
@@ -1785,61 +1787,63 @@ export default function App() {
                       </>
                     )}
 
-                    {/* Document Control Widget with AI Extract & Download File Buttons */}
-                    <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-xs uppercase shadow-sm">
-                          {fileExt || 'FILE'}
+                    {/* Document Control Widget with AI Extract & Download File Buttons (Hidden for txt files and plain notes without document) */}
+                    {showDocControlWidget && (
+                      <div className="p-4 bg-[#FAF0E6] border border-[#E8DAC8] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#C89B68] text-white flex items-center justify-center font-extrabold text-xs uppercase shadow-sm">
+                            {fileExt || 'FILE'}
+                          </div>
+                          <div>
+                            <p className="text-xs font-extrabold text-[#4A3E3C] truncate max-w-xs">{activeNoteModal.title}</p>
+                            <p className="text-[10px] text-[#8A7977] font-semibold">
+                              {downloadUrl ? `Dokumen ${fileExt.toUpperCase()} • Ready` : 'Belum Terhubung File Asli'}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-extrabold text-[#4A3E3C] truncate max-w-xs">{activeNoteModal.title}</p>
-                          <p className="text-[10px] text-[#8A7977] font-semibold">
-                            {downloadUrl ? `Dokumen ${fileExt.toUpperCase()} • Ready` : 'Belum Terhubung File Asli'}
-                          </p>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {downloadUrl ? (
-                          <>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {downloadUrl ? (
+                            <>
+                              <button
+                                onClick={() => handleRealAIScan(activeNoteModal)}
+                                disabled={scanningId === activeNoteModal.id}
+                                className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                              >
+                                <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
+                                <span>
+                                  {scanningId === activeNoteModal.id
+                                    ? (scanStatus[activeNoteModal.id] || 'Membaca dokumen...')
+                                    : 'AI Baca Teks'}
+                                </span>
+                              </button>
+
+                              <a
+                                href={downloadUrl}
+                                download={activeNoteModal.title}
+                                className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95"
+                              >
+                                <Download size={14} className="text-[#C89B68]" />
+                                <span>Download File {fileExt ? fileExt.toUpperCase() : 'Asli'}</span>
+                              </a>
+                            </>
+                          ) : (
                             <button
-                              onClick={() => handleRealAIScan(activeNoteModal)}
+                              onClick={() => handleAttachFileToNote(activeNoteModal)}
                               disabled={scanningId === activeNoteModal.id}
-                              className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                              className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-extrabold py-2 px-4 rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
                             >
-                              <Sparkles size={14} className={scanningId === activeNoteModal.id ? 'animate-spin' : ''} />
+                              <Upload size={14} />
                               <span>
                                 {scanningId === activeNoteModal.id
-                                  ? (scanStatus[activeNoteModal.id] || 'Membaca dokumen...')
-                                  : 'AI Baca Teks'}
+                                  ? (scanStatus[activeNoteModal.id] || 'Mengunggah file...')
+                                  : '📤 Hubungkan File PDF / Baca AI'}
                               </span>
                             </button>
-
-                            <a
-                              href={downloadUrl}
-                              download={activeNoteModal.title}
-                              className="bg-white hover:bg-[#F7EFE5] border border-[#E8DAC8] text-[#8C5E32] text-xs font-extrabold py-2 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95"
-                            >
-                              <Download size={14} className="text-[#C89B68]" />
-                              <span>Download File {fileExt ? fileExt.toUpperCase() : 'Asli'}</span>
-                            </a>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => handleAttachFileToNote(activeNoteModal)}
-                            disabled={scanningId === activeNoteModal.id}
-                            className="bg-[#C89B68] hover:bg-[#B88B58] text-white text-xs font-extrabold py-2 px-4 rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
-                          >
-                            <Upload size={14} />
-                            <span>
-                              {scanningId === activeNoteModal.id
-                                ? (scanStatus[activeNoteModal.id] || 'Mengunggah file...')
-                                : '📤 Hubungkan File PDF / Baca AI'}
-                            </span>
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })()}
