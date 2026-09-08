@@ -1407,9 +1407,6 @@ export default function App() {
                             <p className={`text-[10px] ${t.textMuted} truncate`}>
                               {currentUser.email || 'user@stoody.id'}
                             </p>
-                            <span className={`inline-block mt-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${t.badgeBg} ${t.badgeText}`}>
-                              {currentUser.id === 'demo-budi' ? '🧢 Workspace Budi' : currentUser.id === 'demo-alysa' ? '🌸 Workspace Alysa' : '✨ Stoody Member'}
-                            </span>
                           </div>
                         </div>
 
@@ -1484,7 +1481,7 @@ export default function App() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className={`text-base font-extrabold ${t.textMain}`}>
-                  {currentUser?.id === 'demo-budi' ? "Budi's Class Schedule 📅" : "Alysa's Class Schedule 📅"}
+                  Class Schedule 📅
                 </h2>
                 <p className={`text-xs ${t.textMuted}`}>
                   Weekly course timetable (Monday - Friday)
