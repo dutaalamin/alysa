@@ -311,14 +311,14 @@ export default function App() {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
 
-  // Theme State (Pastel 🌸, Snoopy Red 🐶, Dark 🌙)
-  const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('stoody_theme') || 'pastel';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('stoody_theme', currentTheme);
-  }, [currentTheme]);
+  // Automatic Theme Assignment: Budi -> Snoopy Red, Alysa / default -> Pastel Warm
+  const currentTheme = useMemo(() => {
+    if (!currentUser) return 'pastel';
+    const isBudi = currentUser.id === 'demo-budi' || 
+                   currentUser.email?.toLowerCase().includes('budi') || 
+                   currentUser.user_metadata?.full_name?.toLowerCase() === 'budi';
+    return isBudi ? 'snoopy' : 'pastel';
+  }, [currentUser]);
 
   const t = THEMES[currentTheme] || THEMES.pastel;
 
@@ -549,11 +549,6 @@ export default function App() {
       user_metadata: { full_name: name }
     };
     setCurrentUser(demoUser);
-    if (isBudi) {
-      setCurrentTheme('snoopy');
-    } else {
-      setCurrentTheme('pastel');
-    }
     setIsAuthModalOpen(false);
   };
 
@@ -1309,21 +1304,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Theme Selector Pill Badge */}
-            <div className={`flex items-center gap-1.5 ${t.bgInput} border ${t.border} px-3 py-1.5 rounded-full text-xs font-extrabold shadow-sm`}>
-              <span className="text-xs">
-                {currentTheme === 'snoopy' ? '🐶' : currentTheme === 'dark' ? '🌙' : '🌸'}
-              </span>
-              <select
-                value={currentTheme}
-                onChange={(e) => setCurrentTheme(e.target.value)}
-                className={`bg-transparent border-0 text-xs font-extrabold ${t.textMain} focus:outline-none cursor-pointer`}
-              >
-                <option value="pastel" className="text-black bg-white">🌸 Pastel Warm</option>
-                <option value="snoopy" className="text-black bg-white">🐶 Snoopy Red</option>
-                <option value="dark" className="text-black bg-white">🌙 Dark Midnight</option>
-              </select>
-            </div>
+
 
             {/* Modern User Profile Badge (Desktop) */}
             {currentUser ? (
