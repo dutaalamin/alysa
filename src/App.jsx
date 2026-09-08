@@ -440,11 +440,8 @@ export default function App() {
 
                 <nav className="space-y-1 pt-2">
                   {[
-                    { label: 'All Notes', icon: FileText, count: notes.length },
-                    { label: 'Class Schedule', icon: Calendar, count: totalClassesCount },
-                    { label: 'Pinned', icon: Pin, count: notes.filter(n => n.pinned).length },
-                    { label: 'Photos / Slides', icon: ImageIcon, count: notes.filter(n => n.images && n.images.length > 0).length },
-                    { label: 'AI Scan', icon: Sparkles, count: notes.filter(n => n.ocrExtracted).length }
+                    { label: 'All Notes', icon: FileText },
+                    { label: 'Class Schedule', icon: Calendar }
                   ].map((item) => {
                     const Icon = item.icon;
                     const isActive = activeNav === item.label && !selectedFolder;
@@ -466,11 +463,6 @@ export default function App() {
                           <Icon size={16} className={isActive ? 'text-[#8C5E32]' : 'text-[#8A7977]'} />
                           <span>{item.label}</span>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-                          isActive ? 'bg-[#E8D4C1] text-[#7A5430]' : 'bg-[#FAF0E6] text-[#8A7977]'
-                        }`}>
-                          {item.count}
-                        </span>
                       </button>
                     );
                   })}
@@ -538,11 +530,8 @@ export default function App() {
           {/* Side Navigation Items */}
           <nav className="space-y-1 pt-2">
             {[
-              { label: 'All Notes', icon: FileText, count: notes.length },
-              { label: 'Class Schedule', icon: Calendar, count: totalClassesCount },
-              { label: 'Pinned', icon: Pin, count: notes.filter(n => n.pinned).length },
-              { label: 'Photos / Slides', icon: ImageIcon, count: notes.filter(n => n.images && n.images.length > 0).length },
-              { label: 'AI Scan', icon: Sparkles, count: notes.filter(n => n.ocrExtracted).length }
+              { label: 'All Notes', icon: FileText },
+              { label: 'Class Schedule', icon: Calendar }
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeNav === item.label && !selectedFolder;
@@ -563,11 +552,6 @@ export default function App() {
                     <Icon size={16} className={isActive ? 'text-[#8C5E32]' : 'text-[#8A7977]'} />
                     <span>{item.label}</span>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
-                    isActive ? 'bg-[#E8D4C1] text-[#7A5430]' : 'bg-[#FAF0E6] text-[#8A7977]'
-                  }`}>
-                    {item.count}
-                  </span>
                 </button>
               );
             })}
