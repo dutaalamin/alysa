@@ -152,26 +152,26 @@ const SCHEDULE_DATA = {
 const INITIAL_NOTES = [];
 const INITIAL_FOLDERS = [];
 
-// Clean Aesthetic Logo Component (Transparent S Curve + clean stoody text)
+// Concept 1: Modern Sleek Minimalist Logo Component for stoody
 function StoodyHostingerLogo({ size = 'md', layout = 'horizontal', showSubtitle = false }) {
-  const iconSizes = size === 'lg' ? 'w-10 h-10' : size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
-  const textSizes = size === 'lg' ? 'text-2xl font-black' : size === 'sm' ? 'text-base font-extrabold' : 'text-xl font-extrabold';
+  const iconContainerClass = size === 'lg' ? 'w-12 h-12 rounded-2xl shadow-md p-2' : size === 'sm' ? 'w-7 h-7 rounded-xl shadow-xs p-1.5' : 'w-9 h-9 rounded-2xl shadow-sm p-1.5';
+  const textSizes = size === 'lg' ? 'text-2xl font-extrabold' : size === 'sm' ? 'text-base font-extrabold' : 'text-xl font-extrabold';
 
   return (
-    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2' : 'items-center gap-2.5'}`}>
-      <div className={`${iconSizes} text-[#C89B68] flex items-center justify-center flex-shrink-0`}>
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+    <div className={`flex ${layout === 'vertical' ? 'flex-col items-center text-center gap-2.5' : 'items-center gap-2.5'}`}>
+      <div className={`${iconContainerClass} bg-gradient-to-br from-[#D4A876] to-[#B88652] text-white flex items-center justify-center flex-shrink-0 border border-white/40 transform hover:scale-105 transition-all`}>
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-white">
           <path 
-            d="M 78 26 C 78 12, 22 12, 22 36 C 22 60, 78 40, 78 64 C 78 88, 22 88, 22 74" 
+            d="M 68 28 C 68 18, 32 18, 32 38 C 32 58, 68 46, 68 64 C 68 82, 32 82, 32 72" 
             stroke="currentColor" 
-            strokeWidth="16" 
+            strokeWidth="14" 
             strokeLinecap="round" 
             strokeLinejoin="round" 
           />
         </svg>
       </div>
       <div className="flex flex-col">
-        <span className={`text-[#4A3E3C] tracking-tight font-['Quicksand',sans-serif] ${textSizes}`}>
+        <span className={`text-[#4A3E3C] tracking-tight font-['Plus_Jakarta_Sans',sans-serif] ${textSizes}`}>
           stoody
         </span>
         {showSubtitle && (
