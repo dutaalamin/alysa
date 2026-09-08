@@ -1703,27 +1703,53 @@ export default function App() {
 
                 return (
                   <div className="space-y-3">
-                    {/* Live PDF Preview iframe if available */}
-                    {isPdf && downloadUrl && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#8A7977]">📑 PDF Live Preview</span>
-                          <button
-                            onClick={() => handleOpenDocument(downloadUrl, activeNoteModal.title)}
-                            className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer"
-                          >
-                            <ExternalLink size={12} />
-                            <span>Buka Fullscreen</span>
-                          </button>
-                        </div>
-                        <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5] shadow-inner">
-                          <iframe
-                            src={pdfPreviewUrl}
-                            className="w-full h-full border-0"
-                            title={activeNoteModal.title}
-                          />
-                        </div>
-                      </div>
+                    {/* Live Document Preview (PDF native iframe or Office Docs Viewer for PPT/Word/Excel) */}
+                    {downloadUrl && (
+                      <>
+                        {isPdf && (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#8A7977]">📑 PDF Live Preview</span>
+                              <button
+                                onClick={() => handleOpenDocument(downloadUrl, activeNoteModal.title)}
+                                className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+                              >
+                                <ExternalLink size={12} />
+                                <span>Buka Fullscreen</span>
+                              </button>
+                            </div>
+                            <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5] shadow-inner">
+                              <iframe
+                                src={pdfPreviewUrl}
+                                className="w-full h-full border-0"
+                                title={activeNoteModal.title}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'].includes(fileExt) && downloadUrl.startsWith('http') && (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#8A7977]">🖼️ {fileExt.toUpperCase()} Slide & Document Preview</span>
+                              <button
+                                onClick={() => handleOpenDocument(downloadUrl, activeNoteModal.title)}
+                                className="text-[11px] font-bold text-[#8C5E32] hover:underline flex items-center gap-1 bg-transparent border-0 cursor-pointer"
+                              >
+                                <ExternalLink size={12} />
+                                <span>Buka Fullscreen</span>
+                              </button>
+                            </div>
+                            <div className="w-full h-[380px] rounded-2xl overflow-hidden border border-[#E8DAC8] bg-[#F7EFE5] shadow-inner">
+                              <iframe
+                                src={`https://docs.google.com/viewer?url=${encodeURIComponent(downloadUrl)}&embedded=true`}
+                                className="w-full h-full border-0"
+                                title={activeNoteModal.title}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* Document Control Widget with AI Extract & Download File Buttons */}

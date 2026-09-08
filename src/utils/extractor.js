@@ -100,7 +100,7 @@ export async function extractTextFromFile(fileOrUrl, fileName = '', onProgress =
           }
         }
         if (slideStrings.length > 0) {
-          slidesText += (slidesText ? '\n\n' : '') + slideStrings.join(' ');
+          slidesText += (slidesText ? '\n\n' : '') + `Slide ${i + 1}:\n` + slideStrings.join(' ');
         }
       }
       return slidesText.trim() || '(Empty PowerPoint slides)';
