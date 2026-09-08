@@ -293,6 +293,15 @@ export default function App() {
     }
   };
 
+  const readFileAsDataURL = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileUpload = async (e) => {
     const filesList = e.target.files || e.dataTransfer?.files;
     if (!filesList || filesList.length === 0) return;
@@ -311,19 +320,10 @@ export default function App() {
       let imageArray = [];
 
       if (isImg) {
-        try {
-          const fileName = `${Date.now()}_${i}.${ext}`;
-          const { data, error } = await supabase.storage.from('notes-images').upload(fileName, file);
-          if (!error && data) {
-            const { data: publicUrlData } = supabase.storage.from('notes-images').getPublicUrl(fileName);
-            if (publicUrlData?.publicUrl) {
-              imageArray = [publicUrlData.publicUrl];
-            }
-          } else {
-            imageArray = [URL.createObjectURL(file)];
-          }
-        } catch (err) {
-          imageArray = [URL.createObjectURL(file)];
+        // Convert photo to permanent Data URL so it opens on all devices/friends' phones
+        const dataUrl = await readFileAsDataURL(file);
+        if (dataUrl) {
+          imageArray = [dataUrl];
         }
       }
 
