@@ -1005,50 +1005,15 @@ export default function App() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-bold text-[#8A7977] mb-1">Course / Folder</label>
-                  <input
-                    type="text"
-                    placeholder="Course name"
-                    className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none"
-                    value={newCourse}
-                    onChange={(e) => setNewCourse(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#8A7977] mb-1">Semester</label>
-                  <select
-                    className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none"
-                    value={newSemester}
-                    onChange={(e) => setNewSemester(e.target.value)}
-                  >
-                    <option value="Semester 1">Semester 1</option>
-                    <option value="Semester 2">Semester 2</option>
-                    <option value="Semester 3">Semester 3</option>
-                    <option value="Semester 4">Semester 4</option>
-                  </select>
-                </div>
-              </div>
-
               <div>
-                <label className="block text-xs font-bold text-[#8A7977] mb-1">Photo Link (Optional)</label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://..."
-                    className="flex-1 bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl px-3 py-1.5 text-xs"
-                    value={imageUrlInput}
-                    onChange={(e) => setImageUrlInput(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddImage}
-                    className="bg-[#F3E5D8] text-[#8C5E32] font-bold text-xs px-3 py-1.5 rounded-xl"
-                  >
-                    + Photo
-                  </button>
-                </div>
+                <label className="block text-xs font-bold text-[#8A7977] mb-1">Course / Folder</label>
+                <input
+                  type="text"
+                  placeholder="Course name (e.g. Algorithms)"
+                  className="w-full bg-[#FAF4EC] border border-[#E8DAC8] rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-[#C89B68]"
+                  value={newCourse}
+                  onChange={(e) => setNewCourse(e.target.value)}
+                />
               </div>
 
               <div>
